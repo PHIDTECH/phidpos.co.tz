@@ -1,0 +1,53 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: phidpos_db
+    restart: always
+    environment:
+      POSTGRES_USER: phidpos
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: phidpos
+    volumes:
+      - phidpos_postgres_data:/var/lib/postgresql/data
+    # Port 5433 on host avoids conflicts with any existing PostgreSQL on the server
+    ports:
+      - "127.0.0.1:5433:5432"
+    networks:
+      - phidpos_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U phidpos"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: phidpos_app
+    restart: always
+    # Bind to 127.0.0.1 only - Nginx proxies externally
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      DATABASE_URL: postgresql://phidpos:${POSTGRES_PASSWORD}@postgres:5432/phidpos
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+      NEXT_PUBLIC_APP_NAME: PhidPOS
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - phidpos_network
+
+networks:
+  phidpos_network:
+    driver: bridge
+    name: phidpos_network
+
+volumes:
+  phidpos_postgres_data:
