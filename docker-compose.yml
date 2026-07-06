@@ -30,7 +30,7 @@ services:
     restart: always
     # Bind to 127.0.0.1 only - Nginx proxies externally
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3001:3000"
     environment:
       DATABASE_URL: postgresql://phidpos:${POSTGRES_PASSWORD}@postgres:5432/phidpos
       NEXTAUTH_URL: ${NEXTAUTH_URL}
@@ -38,6 +38,7 @@ services:
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
       NEXT_PUBLIC_APP_NAME: PhidPOS
       NODE_ENV: production
+      PORT: "3000"
     depends_on:
       postgres:
         condition: service_healthy
