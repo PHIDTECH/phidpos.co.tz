@@ -19,6 +19,11 @@ RUN npx prisma generate
 
 # Build Next.js
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+# Dummy env vars needed for Next.js static analysis during build
+ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+ENV NEXTAUTH_SECRET="build-time-placeholder-secret-not-used-in-production"
+ENV NEXTAUTH_URL="https://www.phidpos.co.tz"
 RUN npm run build
 
 # ---- Stage 3: Runner ----
@@ -32,8 +37,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy built assets
-COPY --from=builder /app/public ./public 2>/dev/null || true
+# Copy built assets (public dir may not exist)
+RUN mkdir -p ./public
+COPY --from=builder /app/public/ ./public/
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
