@@ -97,13 +97,13 @@ async function main() {
   console.log("✅ Plans created");
 
   // Create Super Admin
-  const superAdminPassword = await bcrypt.hash("Admin@1234", 12);
+  const superAdminPassword = await bcrypt.hash("Phidtech@@2023", 12);
   const superAdmin = await prisma.user.upsert({
-    where: { email: "superadmin@phidpos.co.tz" },
+    where: { email: "phidtechnology@gmail.com" },
     update: {},
     create: {
       name: "Super Admin",
-      email: "superadmin@phidpos.co.tz",
+      email: "phidtechnology@gmail.com",
       password: superAdminPassword,
       role: UserRole.SUPER_ADMIN,
     },
@@ -158,13 +158,13 @@ async function main() {
   });
 
   // Create Demo Admin
-  const adminPassword = await bcrypt.hash("Admin@1234", 12);
+  const adminPassword = await bcrypt.hash("Phidtech@@2023", 12);
   await prisma.user.upsert({
-    where: { email: "admin@demo-shop.com" },
+    where: { email: "bagokap.8275@gmail.com" },
     update: {},
     create: {
       name: "Demo Admin",
-      email: "admin@demo-shop.com",
+      email: "bagokap.8275@gmail.com",
       password: adminPassword,
       role: UserRole.TENANT_ADMIN,
       tenantId: demoTenant.id,
