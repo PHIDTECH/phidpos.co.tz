@@ -108,10 +108,47 @@ export default function Home() {
         }
         .feature-title { font-size: 16px; font-weight: 700; color: #111; margin-bottom: 8px; }
         .feature-desc { font-size: 14px; color: #6b7280; line-height: 1.6; }
-        .cta { padding: 80px 24px; background: linear-gradient(135deg, #2563eb, #4f46e5); text-align: center; }
+        .pricing-section { background: #fff; padding: 0 0 80px; }
+        .pricing-header {
+          background: linear-gradient(135deg, #4338ca 0%, #6d28d9 60%, #7c3aed 100%);
+          padding: 60px 24px 100px; text-align: center; position: relative;
+          clip-path: ellipse(110% 100% at 50% 0%);
+        }
+        .pricing-header h2 { font-size: 32px; font-weight: 900; color: #fff; margin-bottom: 12px; }
+        .pricing-header p { font-size: 16px; color: #c4b5fd; max-width: 560px; margin: 0 auto 8px; }
+        .pricing-header .sw-note { font-size: 14px; color: #ddd6fe; margin-top: 10px; font-style: italic; }
+        .pricing-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 960px; margin: -48px auto 0; padding: 0 24px; position: relative; z-index: 10; }
+        .pricing-card {
+          background: #fff; border-radius: 16px; padding: 32px 28px;
+          border: 1px solid #e5e7eb; box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+          display: flex; flex-direction: column; position: relative;
+        }
+        .pricing-card.popular { border: 2px solid #2563eb; box-shadow: 0 8px 32px rgba(37,99,235,0.15); }
+        .popular-badge {
+          position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+          background: #2563eb; color: #fff; font-size: 12px; font-weight: 800;
+          padding: 5px 18px; border-radius: 999px; white-space: nowrap;
+        }
+        .plan-name { font-size: 22px; font-weight: 900; color: #111; margin-bottom: 6px; text-align: center; }
+        .plan-trial { font-size: 13px; color: #2563eb; font-weight: 600; text-align: center; margin-bottom: 16px; }
+        .plan-price { text-align: center; margin-bottom: 6px; }
+        .plan-price .amount { font-size: 36px; font-weight: 900; color: #111; }
+        .plan-price .period { font-size: 14px; color: #6b7280; }
+        .plan-tagline { font-size: 13px; color: #6b7280; text-align: center; margin-bottom: 24px; }
+        .plan-features { list-style: none; padding: 0; margin: 0 0 28px; flex: 1; }
+        .plan-features li { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; font-size: 13px; color: #374151; border-bottom: 1px solid #f9fafb; }
+        .plan-features li .check { color: #16a34a; font-weight: 900; flex-shrink: 0; }
+        .plan-features li .cross { color: #d1d5db; flex-shrink: 0; }
+        .plan-btn { display: block; text-align: center; padding: 13px; border-radius: 10px; font-size: 14px; font-weight: 700; text-decoration: none; transition: 0.2s; }
+        .plan-btn-primary { background: #2563eb; color: #fff; }
+        .plan-btn-primary:hover { background: #1d4ed8; }
+        .plan-btn-outline { background: #fff; color: #2563eb; border: 2px solid #2563eb; }
+        .plan-btn-outline:hover { background: #eff6ff; }
+        .cta { padding: 60px 24px; background: linear-gradient(135deg, #2563eb, #4f46e5); text-align: center; }
         .cta h2 { font-size: 32px; font-weight: 800; color: #fff; margin-bottom: 12px; }
         .cta p { font-size: 16px; color: #bfdbfe; margin-bottom: 32px; }
         .cta-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+        @media (max-width: 768px) { .pricing-cards { grid-template-columns: 1fr; } }
         .footer { background: #111827; padding: 32px 24px; }
         .footer-inner {
           max-width: 1200px; margin: 0 auto;
@@ -235,8 +272,71 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Pricing */}
+      <section className="pricing-section" id="pricing">
+        <div className="pricing-header">
+          <h2>Chagua Mpango Unaokufaa</h2>
+          <p>Transparent pricing that scales with your business — no hidden fees.</p>
+          <div className="sw-note">Kiswahili: Bei rahisi na uwazi. Chagua mpango unaofaa ukubwa wa biashara yako. Kuboresha kadri unavyokua bila ada za siri.</div>
+        </div>
+
+        <div className="pricing-cards">
+          {/* Starter */}
+          <div className="pricing-card">
+            <div className="plan-name">Starter</div>
+            <div className="plan-trial">Jaribio la siku 14 bure</div>
+            <div className="plan-price">
+              <span className="amount">TZS 29,000</span><br/>
+              <span className="period">/mwezi</span>
+            </div>
+            <div className="plan-tagline">Hadi watumiaji 2 · Duka 1</div>
+            <ul className="plan-features">
+              {["✓ Mauzo ya POS","✓ Usimamizi wa Bidhaa","✓ Ripoti za Msingi","✓ Wateja 100","✗ Wasambazaji","✗ Uhasibu","✗ Maduka Mengi","✗ Manunuzi"].map((f,i)=>(
+                <li key={i}><span className={f.startsWith("✓") ? "check" : "cross"}>{f[0]}</span>{f.slice(2)}</li>
+              ))}
+            </ul>
+            <a href="/register" className="plan-btn plan-btn-outline">Anza Bure →</a>
+          </div>
+
+          {/* Business - Most Popular */}
+          <div className="pricing-card popular">
+            <div className="popular-badge">Most Popular</div>
+            <div className="plan-name">Business</div>
+            <div className="plan-trial">Jaribio la siku 14 bure</div>
+            <div className="plan-price">
+              <span className="amount">TZS 79,000</span><br/>
+              <span className="period">/mwezi</span>
+            </div>
+            <div className="plan-tagline">Hadi watumiaji 5 · Maduka 2</div>
+            <ul className="plan-features">
+              {["✓ Mauzo ya POS","✓ Usimamizi wa Bidhaa","✓ Ripoti za Kina","✓ Wateja Wasio na Kikomo","✓ Wasambazaji","✓ Manunuzi","✓ Maduka 2","✗ Uhasibu wa Kina"].map((f,i)=>(
+                <li key={i}><span className={f.startsWith("✓") ? "check" : "cross"}>{f[0]}</span>{f.slice(2)}</li>
+              ))}
+            </ul>
+            <a href="/register" className="plan-btn plan-btn-primary">Anza Bure →</a>
+          </div>
+
+          {/* Professional */}
+          <div className="pricing-card">
+            <div className="plan-name">Professional</div>
+            <div className="plan-trial">Jaribio la siku 14 bure</div>
+            <div className="plan-price">
+              <span className="amount">TZS 149,000</span><br/>
+              <span className="period">/mwezi</span>
+            </div>
+            <div className="plan-tagline">Watumiaji wasio na kikomo · Maduka yote</div>
+            <ul className="plan-features">
+              {["✓ Mauzo ya POS","✓ Usimamizi wa Bidhaa","✓ Ripoti Zote","✓ Wateja Wasio na Kikomo","✓ Wasambazaji","✓ Uhasibu Kamili","✓ Maduka Mengi","✓ SMS & Barua Pepe"].map((f,i)=>(
+                <li key={i}><span className={f.startsWith("✓") ? "check" : "cross"}>{f[0]}</span>{f.slice(2)}</li>
+              ))}
+            </ul>
+            <a href="/register" className="plan-btn plan-btn-outline">Anza Bure →</a>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
-      <section className="cta" id="pricing">
+      <section className="cta">
         <h2>Uko tayari kukuza biashara yako?</h2>
         <p>Jiunge na mamia ya wafanyabiashara wanaotumia PhidPOS Tanzania</p>
         <div className="cta-buttons">
