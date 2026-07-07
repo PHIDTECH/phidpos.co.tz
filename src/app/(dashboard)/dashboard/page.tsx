@@ -4,199 +4,219 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import {
-  ShoppingCart, Package, Users, TrendingUp, AlertTriangle,
-  ArrowUpRight, DollarSign, CreditCard, RefreshCw
-} from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
-import { formatCurrency, formatDateTime } from "@/lib/utils";
 
 interface DashboardData {
   stats: {
-    todaySales: number;
-    todayRevenue: number;
-    totalProducts: number;
-    lowStockProducts: number;
-    totalCustomers: number;
-    monthlyRevenue: number;
-    monthlySales: number;
-    pendingDebt: number;
+    todaySales: number; todayRevenue: number; totalProducts: number;
+    lowStockProducts: number; totalCustomers: number; monthlyRevenue: number;
+    monthlySales: number; pendingDebt: number;
   };
   recentSales: any[];
   topProducts: any[];
   weeklyChart: any[];
 }
 
+function fmt(amount: number | string) {
+  const n = typeof amount === "string" ? parseFloat(amount) : (amount || 0);
+  return "TZS " + n.toLocaleString("en-TZ", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+function fmtDate(d: string) {
+  try { return new Date(d).toLocaleDateString("en-TZ", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }); }
+  catch { return d; }
+}
+
+const css = `
+  .db { padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f3f4f6; min-height: 100%; }
+  .db-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .db-title { font-size: 22px; font-weight: 800; color: #111; }
+  .db-sub { font-size: 13px; color: #6b7280; margin-top: 2px; }
+  .btn-refresh { padding: 8px 16px; border-radius: 8px; border: 1px solid #d1d5db; background: #fff; font-size: 13px; font-weight: 600; color: #374151; cursor: pointer; }
+  .alert-box { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #92400e; margin-bottom: 16px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .stat-card { background: #fff; border-radius: 12px; padding: 20px; border: 1px solid #e5e7eb; display: flex; align-items: flex-start; justify-content: space-between; }
+  .stat-val { font-size: 20px; font-weight: 800; color: #111; margin: 4px 0; }
+  .stat-label { font-size: 12px; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+  .stat-sub { font-size: 12px; color: #9ca3af; }
+  .stat-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .row2 { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 20px; }
+  .card { background: #fff; border-radius: 12px; padding: 20px; border: 1px solid #e5e7eb; }
+  .card-title { font-size: 14px; font-weight: 700; color: #111; margin-bottom: 14px; }
+  .chart-bars { display: flex; align-items: flex-end; gap: 6px; height: 120px; padding-top: 10px; }
+  .chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .chart-bar { width: 100%; background: #2563eb; border-radius: 4px 4px 0 0; min-height: 4px; transition: height 0.3s; }
+  .chart-label { font-size: 10px; color: #9ca3af; }
+  .top-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f3f4f6; }
+  .top-num { width: 22px; height: 22px; border-radius: 50%; background: #dbeafe; color: #2563eb; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .top-name { flex: 1; font-size: 13px; font-weight: 500; color: #111; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .top-rev { font-size: 12px; font-weight: 700; color: #374151; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 0 0 10px; font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #e5e7eb; }
+  td { padding: 10px 0; border-bottom: 1px solid #f3f4f6; color: #374151; }
+  td.mono { font-family: monospace; font-size: 12px; }
+  td.right { text-align: right; font-weight: 700; }
+  td.muted { color: #9ca3af; font-size: 12px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .badge-blue { background: #dbeafe; color: #1d4ed8; }
+  .badge-gray { background: #f3f4f6; color: #6b7280; }
+  .empty { padding: 32px; text-align: center; color: #9ca3af; font-size: 13px; }
+  .loading-box { display: flex; align-items: center; justify-content: center; height: 200px; }
+  .spinner { width: 36px; height: 36px; border: 3px solid #e5e7eb; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (max-width: 900px) { .stats-grid { grid-template-columns: 1fr 1fr; } .row2 { grid-template-columns: 1fr; } }
+  @media (max-width: 500px) { .stats-grid { grid-template-columns: 1fr; } }
+`;
+
 export default function DashboardPage() {
-  const sessionData = useSession(); const session = sessionData?.data;
+  const { data: session } = useSession();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   async function load() {
-    setLoading(true);
+    setLoading(true); setError("");
     try {
       const res = await fetch("/api/dashboard");
+      if (!res.ok) { setError("API error: " + res.status); setLoading(false); return; }
       const json = await res.json();
       setData(json);
-    } catch {}
+    } catch (e: any) {
+      setError(e.message || "Failed to load");
+    }
     setLoading(false);
   }
 
   useEffect(() => { load(); }, []);
 
-  const currency = "TZS";
+  const userName = session?.user?.name || "User";
+  const today = new Date().toLocaleDateString("en-TZ", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 
-  const statCards = data ? [
-    { title: "Today's Revenue", value: formatCurrency(data.stats.todayRevenue, currency), sub: `${data.stats.todaySales} transactions`, icon: DollarSign, color: "bg-blue-500", change: "+Today" },
-    { title: "Monthly Revenue", value: formatCurrency(data.stats.monthlyRevenue, currency), sub: `${data.stats.monthlySales} sales this month`, icon: TrendingUp, color: "bg-green-500", change: "+Month" },
-    { title: "Total Products", value: data.stats.totalProducts.toString(), sub: `${data.stats.lowStockProducts} low stock alerts`, icon: Package, color: "bg-purple-500", change: data.stats.lowStockProducts > 0 ? "⚠ Low stock" : "✓ Stocked" },
-    { title: "Total Customers", value: data.stats.totalCustomers.toString(), sub: `${formatCurrency(data.stats.pendingDebt, currency)} outstanding debt`, icon: Users, color: "bg-orange-500", change: "Registered" },
-  ] : [];
+  const statCards = [
+    { label: "Leo Mapato", val: fmt(data?.stats.todayRevenue || 0), sub: `${data?.stats.todaySales || 0} miamala`, icon: "💰", bg: "#dbeafe", color: "#2563eb" },
+    { label: "Mapato Mwezi", val: fmt(data?.stats.monthlyRevenue || 0), sub: `${data?.stats.monthlySales || 0} mauzo`, icon: "📈", bg: "#dcfce7", color: "#16a34a" },
+    { label: "Bidhaa Zote", val: String(data?.stats.totalProducts || 0), sub: `${data?.stats.lowStockProducts || 0} kiwango kidogo`, icon: "📦", bg: "#f3e8ff", color: "#7c3aed" },
+    { label: "Wateja", val: String(data?.stats.totalCustomers || 0), sub: `Deni: ${fmt(data?.stats.pendingDebt || 0)}`, icon: "👥", bg: "#ffedd5", color: "#ea580c" },
+  ];
 
-  if (loading) {
-    return (
-      <div className="p-6 space-y-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-28 rounded-xl bg-muted animate-pulse" />
-        ))}
-      </div>
-    );
-  }
-
-  if (!data) {
-    return (
-      <div className="p-6 flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <p className="text-muted-foreground text-sm">Failed to load dashboard data.</p>
-          <button onClick={load} className="mt-3 text-sm text-blue-600 hover:underline">Try again</button>
-        </div>
-      </div>
-    );
-  }
+  // Simple bar chart from weeklyChart
+  const chartData = data?.weeklyChart || [];
+  const maxRev = Math.max(...chartData.map((d: any) => d.revenue || 0), 1);
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground text-sm">Welcome back, {session?.user?.name}</p>
+    <>
+      <style>{css}</style>
+      <div className="db">
+        {/* Header */}
+        <div className="db-header">
+          <div>
+            <div className="db-title">Karibu, {userName} 👋</div>
+            <div className="db-sub">{today}</div>
+          </div>
+          <button className="btn-refresh" onClick={load}>↻ Refresh</button>
         </div>
-        <button onClick={load} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground border rounded-lg px-3 py-2">
-          <RefreshCw className="w-4 h-4" /> Refresh
-        </button>
-      </div>
 
-      {/* Low Stock Banner */}
-      {data && data.stats.lowStockProducts > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 flex items-center gap-3 text-amber-800">
-          <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0" />
-          <span className="text-sm font-medium">{data.stats.lowStockProducts} product(s) are running low on stock. <a href="/inventory" className="underline">View Inventory →</a></span>
-        </div>
-      )}
+        {/* Alert */}
+        {(data?.stats.lowStockProducts || 0) > 0 && (
+          <div className="alert-box">
+            ⚠️ Bidhaa {data!.stats.lowStockProducts} zina hifadhi ndogo. <a href="/inventory" style={{color:"#b45309",fontWeight:700}}>Angalia Hifadhi →</a>
+          </div>
+        )}
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {statCards.map((card, i) => {
-          const Icon = card.icon;
-          return (
-            <div key={i} className="bg-card border rounded-xl p-5 flex items-start justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{card.title}</p>
-                <p className="text-2xl font-bold mt-1">{card.value}</p>
-                <p className="text-xs text-muted-foreground mt-1">{card.sub}</p>
+        {error && (
+          <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:"10px",padding:"12px 16px",fontSize:"13px",color:"#dc2626",marginBottom:"16px"}}>
+            ❌ {error} — <button onClick={load} style={{color:"#dc2626",fontWeight:700,background:"none",border:"none",cursor:"pointer"}}>Jaribu tena</button>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="loading-box"><div className="spinner" /></div>
+        ) : (
+          <>
+            {/* Stat Cards */}
+            <div className="stats-grid">
+              {statCards.map((c, i) => (
+                <div key={i} className="stat-card">
+                  <div>
+                    <div className="stat-label">{c.label}</div>
+                    <div className="stat-val">{c.val}</div>
+                    <div className="stat-sub">{c.sub}</div>
+                  </div>
+                  <div className="stat-icon" style={{background: c.bg, color: c.color}}>{c.icon}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Charts Row */}
+            <div className="row2">
+              {/* Weekly Chart */}
+              <div className="card">
+                <div className="card-title">Mapato - Siku 7 Zilizopita</div>
+                {chartData.length > 0 ? (
+                  <div className="chart-bars">
+                    {chartData.map((d: any, i: number) => (
+                      <div key={i} className="chart-bar-wrap">
+                        <div className="chart-bar" style={{height: `${Math.max(4, (d.revenue / maxRev) * 100)}px`}} title={fmt(d.revenue)} />
+                        <div className="chart-label">{(d.date || "").slice(5)}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="empty">Hakuna data ya mauzo bado</div>
+                )}
               </div>
-              <div className={`w-10 h-10 rounded-lg ${card.color} flex items-center justify-center flex-shrink-0`}>
-                <Icon className="w-5 h-5 text-white" />
+
+              {/* Top Products */}
+              <div className="card">
+                <div className="card-title">Bidhaa Zinazoongoza</div>
+                {(data?.topProducts || []).length > 0 ? (data?.topProducts || []).map((p: any, i: number) => (
+                  <div key={i} className="top-item">
+                    <div className="top-num">{i + 1}</div>
+                    <div className="top-name">{p.name}</div>
+                    <div className="top-rev">{fmt(p.totalRevenue)}</div>
+                  </div>
+                )) : <div className="empty">Hakuna mauzo bado</div>}
               </div>
             </div>
-          );
-        })}
-      </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Weekly Revenue Chart */}
-        <div className="lg:col-span-2 bg-card border rounded-xl p-5">
-          <h3 className="font-semibold mb-4">Revenue - Last 7 Days</h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={data?.weeklyChart || []}>
-              <defs>
-                <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(v) => v.slice(5)} />
-              <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} />
-              <Tooltip formatter={(v: any) => formatCurrency(v, currency)} labelFormatter={(l) => `Date: ${l}`} />
-              <Area type="monotone" dataKey="revenue" stroke="#3b82f6" fill="url(#colorRev)" strokeWidth={2} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Top Products */}
-        <div className="bg-card border rounded-xl p-5">
-          <h3 className="font-semibold mb-4">Top Products (This Month)</h3>
-          <div className="space-y-3">
-            {data?.topProducts.map((p, i) => (
-              <div key={p.productId} className="flex items-center gap-3">
-                <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center flex-shrink-0">{i + 1}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{p.name}</p>
-                  <p className="text-xs text-muted-foreground">Qty: {p.totalQty}</p>
-                </div>
-                <p className="text-sm font-semibold text-right flex-shrink-0">{formatCurrency(p.totalRevenue, currency)}</p>
+            {/* Recent Sales */}
+            <div className="card">
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"14px"}}>
+                <div className="card-title" style={{marginBottom:0}}>Mauzo ya Hivi Karibuni</div>
+                <a href="/reports" style={{fontSize:"13px",color:"#2563eb",fontWeight:600,textDecoration:"none"}}>Angalia Zote →</a>
               </div>
-            ))}
-            {(!data?.topProducts || data.topProducts.length === 0) && (
-              <p className="text-sm text-muted-foreground text-center py-4">No sales data yet</p>
-            )}
-          </div>
-        </div>
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Risiti</th>
+                      <th>Mteja</th>
+                      <th>Mkaguzi</th>
+                      <th>Vitu</th>
+                      <th style={{textAlign:"right"}}>Jumla</th>
+                      <th>Tarehe</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(data?.recentSales || []).length > 0 ? (data?.recentSales || []).map((sale: any) => (
+                      <tr key={sale.id}>
+                        <td className="mono">{sale.receiptNumber}</td>
+                        <td>{sale.customer?.name || <span style={{color:"#9ca3af"}}>Walk-in</span>}</td>
+                        <td>{sale.user?.name}</td>
+                        <td>{sale.items?.length || 0}</td>
+                        <td className="right">{fmt(sale.total)}</td>
+                        <td className="muted">{fmtDate(sale.createdAt)}</td>
+                      </tr>
+                    )) : (
+                      <tr><td colSpan={6} className="empty">Hakuna mauzo bado</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
       </div>
-
-      {/* Recent Sales */}
-      <div className="bg-card border rounded-xl p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold">Recent Sales</h3>
-          <a href="/reports" className="text-sm text-blue-600 hover:underline flex items-center gap-1">
-            View All <ArrowUpRight className="w-3 h-3" />
-          </a>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-muted-foreground">
-                <th className="text-left pb-2 font-medium">Receipt</th>
-                <th className="text-left pb-2 font-medium">Customer</th>
-                <th className="text-left pb-2 font-medium">Cashier</th>
-                <th className="text-left pb-2 font-medium">Items</th>
-                <th className="text-right pb-2 font-medium">Amount</th>
-                <th className="text-left pb-2 font-medium pl-4">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data?.recentSales.map((sale) => (
-                <tr key={sale.id} className="border-b hover:bg-muted/30 transition-colors">
-                  <td className="py-2.5 font-mono text-xs">{sale.receiptNumber}</td>
-                  <td className="py-2.5">{sale.customer?.name || <span className="text-muted-foreground">Walk-in</span>}</td>
-                  <td className="py-2.5">{sale.user?.name}</td>
-                  <td className="py-2.5">{sale.items?.length}</td>
-                  <td className="py-2.5 text-right font-semibold">{formatCurrency(sale.total, currency)}</td>
-                  <td className="py-2.5 pl-4 text-muted-foreground text-xs">{formatDateTime(sale.createdAt)}</td>
-                </tr>
-              ))}
-              {(!data?.recentSales || data.recentSales.length === 0) && (
-                <tr>
-                  <td colSpan={6} className="py-8 text-center text-muted-foreground">No sales recorded yet</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    </>
   );
 }
