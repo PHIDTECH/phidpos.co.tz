@@ -2,23 +2,67 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLang, type Lang } from "@/lib/i18n";
 
-const navItems = [
-  { href: "/dashboard", key: "dashboard",   icon: "📊", color: "#2563eb", bg: "#eff6ff", roles: ["SUPER_ADMIN","TENANT_ADMIN","STORE_MANAGER","CASHIER","ACCOUNTANT"] },
-  { href: "/pos",       key: "pos",          icon: "🛒", color: "#16a34a", bg: "#f0fdf4", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"] },
-  { href: "/products",  key: "products",     icon: "📦", color: "#7c3aed", bg: "#f5f3ff", roles: ["TENANT_ADMIN","STORE_MANAGER","ACCOUNTANT"] },
-  { href: "/inventory", key: "inventory",    icon: "🏪", color: "#0891b2", bg: "#ecfeff", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
-  { href: "/customers", key: "customers",    icon: "👥", color: "#db2777", bg: "#fdf2f8", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"] },
-  { href: "/suppliers", key: "suppliers",    icon: "🚚", color: "#d97706", bg: "#fffbeb", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
-  { href: "/purchases", key: "purchases",    icon: "🛍️", color: "#ea580c", bg: "#fff7ed", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
-  { href: "/accounting",key: "accounting",   icon: "📒", color: "#059669", bg: "#ecfdf5", roles: ["TENANT_ADMIN","ACCOUNTANT"] },
-  { href: "/reports",   key: "reports",      icon: "📈", color: "#4f46e5", bg: "#eef2ff", roles: ["TENANT_ADMIN","STORE_MANAGER","ACCOUNTANT"] },
-  { href: "/settings",  key: "settings",     icon: "⚙️", color: "#374151", bg: "#f9fafb", roles: ["TENANT_ADMIN"] },
+type SubItem = { href: string; label: string; labelSw: string };
+type NavItem = { href: string; key: string; icon: string; color: string; bg: string; roles: string[]; sub?: SubItem[] };
+
+const navItems: NavItem[] = [
+  { href: "/dashboard", key: "dashboard", icon: "📊", color: "#2563eb", bg: "#eff6ff", roles: ["SUPER_ADMIN","TENANT_ADMIN","STORE_MANAGER","CASHIER","ACCOUNTANT"] },
+  { href: "/pos",       key: "pos",       icon: "🛒", color: "#16a34a", bg: "#f0fdf4", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"],
+    sub: [
+      { href: "/pos",              label: "New Sale",        labelSw: "Mauzo Mapya" },
+      { href: "/pos/history",      label: "Sales History",   labelSw: "Historia ya Mauzo" },
+    ]
+  },
+  { href: "/products",  key: "products",  icon: "📦", color: "#7c3aed", bg: "#f5f3ff", roles: ["TENANT_ADMIN","STORE_MANAGER","ACCOUNTANT"],
+    sub: [
+      { href: "/products",         label: "All Products",    labelSw: "Bidhaa Zote" },
+      { href: "/products/categories", label: "Categories",   labelSw: "Kategoria" },
+    ]
+  },
+  { href: "/inventory", key: "inventory", icon: "🏪", color: "#0891b2", bg: "#ecfeff", roles: ["TENANT_ADMIN","STORE_MANAGER"],
+    sub: [
+      { href: "/inventory",        label: "Stock Levels",    labelSw: "Hifadhi" },
+      { href: "/inventory/adjust", label: "Adjustments",     labelSw: "Marekebisho" },
+    ]
+  },
+  { href: "/customers", key: "customers", icon: "👥", color: "#db2777", bg: "#fdf2f8", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"],
+    sub: [
+      { href: "/customers",        label: "All Customers",   labelSw: "Wateja Wote" },
+      { href: "/customers/groups", label: "Groups",          labelSw: "Makundi" },
+    ]
+  },
+  { href: "/suppliers", key: "suppliers", icon: "🚚", color: "#d97706", bg: "#fffbeb", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
+  { href: "/purchases", key: "purchases", icon: "🛍️", color: "#ea580c", bg: "#fff7ed", roles: ["TENANT_ADMIN","STORE_MANAGER"],
+    sub: [
+      { href: "/purchases",        label: "All Purchases",   labelSw: "Manunuzi Yote" },
+      { href: "/purchases/orders", label: "Purchase Orders", labelSw: "Maagizo" },
+    ]
+  },
+  { href: "/accounting",key: "accounting",icon: "📒", color: "#059669", bg: "#ecfdf5", roles: ["TENANT_ADMIN","ACCOUNTANT"],
+    sub: [
+      { href: "/accounting",         label: "Overview",      labelSw: "Muhtasari" },
+      { href: "/accounting/expenses",label: "Expenses",      labelSw: "Matumizi" },
+    ]
+  },
+  { href: "/reports",   key: "reports",   icon: "📈", color: "#4f46e5", bg: "#eef2ff", roles: ["TENANT_ADMIN","STORE_MANAGER","ACCOUNTANT"],
+    sub: [
+      { href: "/reports",          label: "Sales Report",    labelSw: "Ripoti ya Mauzo" },
+      { href: "/reports/inventory",label: "Inventory Report",labelSw: "Ripoti ya Hifadhi" },
+    ]
+  },
+  { href: "/settings",  key: "settings",  icon: "⚙️", color: "#374151", bg: "#f9fafb", roles: ["TENANT_ADMIN"],
+    sub: [
+      { href: "/settings",          label: "General",        labelSw: "Jumla" },
+      { href: "/settings/users",    label: "Users & Roles",  labelSw: "Watumiaji" },
+      { href: "/settings/stores",   label: "Stores",         labelSw: "Maduka" },
+    ]
+  },
 ];
 
 const styles = `
@@ -55,13 +99,25 @@ const styles = `
   .nav-item:hover { background: #f3f4f6; color: #111; }
   .nav-item.active { background: #2563eb; color: #fff; font-weight: 700; }
   .nav-item.active .nav-icon-wrap { background: rgba(255,255,255,0.2) !important; }
-  .nav-item .nav-chevron { margin-left: auto; font-size: 10px; color: #9ca3af; }
+  .nav-item .nav-chevron { margin-left: auto; font-size: 11px; color: #9ca3af; transition: transform 0.2s; }
   .nav-item.active .nav-chevron { color: rgba(255,255,255,0.7); }
+  .nav-item.expanded .nav-chevron { transform: rotate(90deg); }
   .nav-icon-wrap {
     width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center; font-size: 15px;
     transition: background 0.15s;
   }
+  .submenu { overflow: hidden; margin: 0 0 2px 0; }
+  .submenu-inner { padding: 2px 0 4px 41px; }
+  .sub-item {
+    display: block; padding: 7px 10px 7px 12px;
+    font-size: 12.5px; font-weight: 500; color: #6b7280;
+    text-decoration: none; border-radius: 8px; margin-bottom: 1px;
+    border-left: 2px solid transparent;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .sub-item:hover { background: #f3f4f6; color: #111; border-left-color: #d1d5db; }
+  .sub-item.active { background: #eff6ff; color: #2563eb; font-weight: 700; border-left-color: #2563eb; }
   .sidebar-footer {
     padding: 10px 10px 14px;
     border-top: 1px solid #f3f4f6;
@@ -158,9 +214,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const userName = session?.user?.name || "User";
   const tenantName = (session?.user as any)?.tenantSlug || "PhidPOS";
   const initial = userName.charAt(0).toUpperCase();
-  const currentKey = filteredNav.find(n => pathname === n.href || pathname.startsWith(n.href + "/"))?.key || "dashboard";
+  const activeItem = filteredNav.find(n => pathname === n.href || pathname.startsWith(n.href + "/"));
+  const currentKey = activeItem?.key || "dashboard";
   const currentLabel = t[currentKey as keyof typeof t] || currentKey;
   const roleLabel = role?.replace(/_/g, " ") || "User";
+  const [expanded, setExpanded] = useState<string>(activeItem?.href || "");
+  useEffect(() => { if (activeItem) setExpanded(activeItem.href); }, [pathname]);
 
   return (
     <>
@@ -183,23 +242,49 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <nav className="sidebar-nav">
             {filteredNav.map((item) => {
               const active = pathname === item.href || pathname.startsWith(item.href + "/");
+              const isExpanded = expanded === item.href;
               const label = t[item.key as keyof typeof t] || item.key;
+              const hasSub = item.sub && item.sub.length > 0;
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`nav-item${active ? " active" : ""}`}
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <span
-                    className="nav-icon-wrap"
-                    style={{ background: active ? "rgba(255,255,255,0.2)" : item.bg }}
-                  >
-                    {item.icon}
-                  </span>
-                  {label}
-                  <span className="nav-chevron">›</span>
-                </Link>
+                <div key={item.href}>
+                  {hasSub ? (
+                    <div
+                      className={`nav-item${active ? " active" : ""}${isExpanded ? " expanded" : ""}`}
+                      onClick={() => { setExpanded(isExpanded ? "" : item.href); }}
+                      style={{ userSelect: "none" }}
+                    >
+                      <span className="nav-icon-wrap" style={{ background: active ? "rgba(255,255,255,0.2)" : item.bg }}>{item.icon}</span>
+                      {label}
+                      <span className="nav-chevron">›</span>
+                    </div>
+                  ) : (
+                    <Link
+                      href={item.href}
+                      className={`nav-item${active ? " active" : ""}`}
+                      onClick={() => setSidebarOpen(false)}
+                    >
+                      <span className="nav-icon-wrap" style={{ background: active ? "rgba(255,255,255,0.2)" : item.bg }}>{item.icon}</span>
+                      {label}
+                      <span className="nav-chevron">›</span>
+                    </Link>
+                  )}
+                  {hasSub && isExpanded && (
+                    <div className="submenu">
+                      <div className="submenu-inner">
+                        {item.sub!.map(s => (
+                          <Link
+                            key={s.href}
+                            href={s.href}
+                            className={`sub-item${pathname === s.href ? " active" : ""}`}
+                            onClick={() => setSidebarOpen(false)}
+                          >
+                            {lang === "sw" ? s.labelSw : s.label}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               );
             })}
           </nav>
