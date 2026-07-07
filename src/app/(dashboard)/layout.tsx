@@ -6,155 +6,193 @@ import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard, ShoppingCart, Package, Users, Truck, ShoppingBag,
-  BarChart3, Settings, LogOut, Menu, X, ChevronDown, Store,
-  BookOpen, Bell, Tag, CreditCard, Wifi, WifiOff
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useOnlineStatus } from "@/hooks/use-online-status";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["SUPER_ADMIN","TENANT_ADMIN","STORE_MANAGER","CASHIER","ACCOUNTANT"] },
-  { href: "/pos", label: "POS / Sales", icon: ShoppingCart, roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"] },
-  { href: "/products", label: "Products", icon: Package, roles: ["TENANT_ADMIN","STORE_MANAGER","ACCOUNTANT"] },
-  { href: "/inventory", label: "Inventory", icon: Store, roles: ["TENANT_ADMIN","STORE_MANAGER"] },
-  { href: "/customers", label: "Customers", icon: Users, roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"] },
-  { href: "/suppliers", label: "Suppliers", icon: Truck, roles: ["TENANT_ADMIN","STORE_MANAGER"] },
-  { href: "/purchases", label: "Purchases", icon: ShoppingBag, roles: ["TENANT_ADMIN","STORE_MANAGER"] },
-  { href: "/accounting", label: "Accounting", icon: BookOpen, roles: ["TENANT_ADMIN","ACCOUNTANT"] },
-  { href: "/reports", label: "Reports", icon: BarChart3, roles: ["TENANT_ADMIN","STORE_MANAGER","ACCOUNTANT"] },
-  { href: "/settings", label: "Settings", icon: Settings, roles: ["TENANT_ADMIN"] },
+  { href: "/dashboard", label: "Dashibodi", icon: "📊", roles: ["SUPER_ADMIN","TENANT_ADMIN","STORE_MANAGER","CASHIER","ACCOUNTANT"] },
+  { href: "/pos", label: "Mauzo / POS", icon: "🛒", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"] },
+  { href: "/products", label: "Bidhaa", icon: "📦", roles: ["TENANT_ADMIN","STORE_MANAGER","ACCOUNTANT"] },
+  { href: "/inventory", label: "Hifadhi", icon: "🏪", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
+  { href: "/customers", label: "Wateja", icon: "👥", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"] },
+  { href: "/suppliers", label: "Wasambazaji", icon: "🚚", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
+  { href: "/purchases", label: "Manunuzi", icon: "🛍️", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
+  { href: "/accounting", label: "Uhasibu", icon: "📒", roles: ["TENANT_ADMIN","ACCOUNTANT"] },
+  { href: "/reports", label: "Ripoti", icon: "📈", roles: ["TENANT_ADMIN","STORE_MANAGER","ACCOUNTANT"] },
+  { href: "/settings", label: "Mipangilio", icon: "⚙️", roles: ["TENANT_ADMIN"] },
 ];
 
+const styles = `
+  .dash-layout { display: flex; height: 100vh; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f3f4f6; }
+  .sidebar {
+    width: 220px; min-width: 220px; background: #2563eb;
+    display: flex; flex-direction: column; height: 100vh;
+    overflow-y: auto; flex-shrink: 0;
+  }
+  .sidebar-logo {
+    display: flex; align-items: center; gap: 10px;
+    padding: 20px 16px 16px; border-bottom: 1px solid rgba(255,255,255,0.15);
+  }
+  .sidebar-logo-icon {
+    width: 36px; height: 36px; background: #fff; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;
+  }
+  .sidebar-logo-text { font-size: 16px; font-weight: 800; color: #fff; }
+  .sidebar-logo-sub { font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 1px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sidebar-nav { flex: 1; padding: 10px 8px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 8px; margin-bottom: 2px;
+    font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.8);
+    text-decoration: none; transition: background 0.15s;
+    cursor: pointer;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.12); color: #fff; }
+  .nav-item.active { background: #fff; color: #2563eb; font-weight: 700; }
+  .nav-item-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+  .sidebar-footer { padding: 10px 8px 16px; border-top: 1px solid rgba(255,255,255,0.15); }
+  .sidebar-user {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; margin-bottom: 4px;
+  }
+  .sidebar-avatar {
+    width: 34px; height: 34px; border-radius: 50%; background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; color: #2563eb; flex-shrink: 0;
+  }
+  .sidebar-user-info { overflow: hidden; }
+  .sidebar-user-name { font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sidebar-user-email { font-size: 10px; color: rgba(255,255,255,0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .btn-signout {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 8px; width: 100%;
+    font-size: 13px; font-weight: 600; color: #fca5a5;
+    background: none; border: none; cursor: pointer; text-align: left;
+  }
+  .btn-signout:hover { background: rgba(255,255,255,0.1); color: #fecaca; }
+  .main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar {
+    height: 56px; background: #fff; border-bottom: 1px solid #e5e7eb;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; flex-shrink: 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .topbar-left { font-size: 15px; font-weight: 700; color: #111; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .topbar-bell {
+    width: 34px; height: 34px; border-radius: 50%; border: 1px solid #e5e7eb;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; cursor: pointer; background: #f9fafb;
+  }
+  .topbar-user {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 12px; border-radius: 8px; border: 1px solid #e5e7eb;
+    background: #f9fafb; cursor: pointer;
+  }
+  .topbar-avatar {
+    width: 28px; height: 28px; border-radius: 50%; background: #2563eb;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 800; color: #fff;
+  }
+  .topbar-name { font-size: 13px; font-weight: 600; color: #111; }
+  .topbar-role { font-size: 11px; color: #6b7280; }
+  .page-content { flex: 1; overflow-y: auto; padding: 24px; }
+  .mobile-menu-btn {
+    display: none; position: fixed; bottom: 20px; right: 20px; z-index: 200;
+    width: 48px; height: 48px; background: #2563eb; border-radius: 50%;
+    border: none; cursor: pointer; color: #fff; font-size: 20px;
+    box-shadow: 0 4px 16px rgba(37,99,235,0.4);
+  }
+  .mobile-overlay { display: none; }
+  @media (max-width: 768px) {
+    .sidebar { position: fixed; left: -220px; top: 0; bottom: 0; z-index: 300; transition: left 0.25s; }
+    .sidebar.open { left: 0; }
+    .mobile-overlay { display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 299; }
+    .mobile-menu-btn { display: flex; align-items: center; justify-content: center; }
+    .topbar-name { display: none; }
+  }
+`;
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const sessionData = useSession(); const session = sessionData?.data;
+  const sessionData = useSession();
+  const session = sessionData?.data;
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const isOnline = useOnlineStatus();
-  const role = session?.user?.role;
-
+  const role = (session?.user as any)?.role;
   const filteredNav = navItems.filter((item) => !role || item.roles.includes(role));
-
-  const Sidebar = ({ mobile = false }: { mobile?: boolean }) => (
-    <div className={cn("flex flex-col h-full", mobile ? "w-full" : "w-64")}>
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-6 py-5 border-b border-sidebar-border">
-        <div className="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
-          <ShoppingCart className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <p className="font-bold text-sidebar-foreground text-sm">PhidPOS</p>
-          <p className="text-xs text-sidebar-foreground/60 truncate max-w-[140px]">
-            {session?.user?.name}
-          </p>
-        </div>
-      </div>
-
-      {/* Online Status */}
-      <div className={cn("mx-4 mt-3 px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5",
-        isOnline ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
-      )}>
-        {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-        {isOnline ? "Online" : "Offline Mode"}
-      </div>
-
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {filteredNav.map((item) => {
-          const Icon = item.icon;
-          const active = pathname === item.href || pathname.startsWith(item.href + "/");
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setSidebarOpen(false)}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                active
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                  : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-              )}
-            >
-              <Icon className="w-4 h-4 flex-shrink-0" />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Footer */}
-      <div className="px-3 py-4 border-t border-sidebar-border space-y-0.5">
-        <Link href="/subscription" onClick={() => setSidebarOpen(false)}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
-        >
-          <CreditCard className="w-4 h-4" />
-          Subscription
-        </Link>
-        <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
-        >
-          <LogOut className="w-4 h-4" />
-          Sign Out
-        </button>
-      </div>
-    </div>
-  );
+  const userName = session?.user?.name || "User";
+  const userEmail = session?.user?.email || "";
+  const initial = userName.charAt(0).toUpperCase();
+  const currentLabel = filteredNav.find(n => pathname === n.href || pathname.startsWith(n.href + "/"))?.label || "Dashibodi";
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
-      {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 bg-sidebar flex-shrink-0 border-r border-sidebar-border">
-        <Sidebar />
-      </aside>
+    <>
+      <style>{styles}</style>
+      <div className="dash-layout">
+        {/* Mobile Overlay */}
+        {sidebarOpen && <div className="mobile-overlay" onClick={() => setSidebarOpen(false)} />}
 
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setSidebarOpen(false)} />
-          <aside className="absolute left-0 top-0 bottom-0 w-72 bg-sidebar flex flex-col shadow-2xl">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-sidebar-border">
-              <span className="text-sidebar-foreground font-bold">Menu</span>
-              <button onClick={() => setSidebarOpen(false)} className="text-sidebar-foreground/60 hover:text-sidebar-foreground">
-                <X className="w-5 h-5" />
-              </button>
+        {/* Sidebar */}
+        <aside className={`sidebar${sidebarOpen ? " open" : ""}`}>
+          <div className="sidebar-logo">
+            <div className="sidebar-logo-icon">🛒</div>
+            <div>
+              <div className="sidebar-logo-text">PhidPOS</div>
+              <div className="sidebar-logo-sub">{(session?.user as any)?.tenantSlug || "Portal"}</div>
             </div>
-            <Sidebar mobile />
-          </aside>
+          </div>
+
+          <nav className="sidebar-nav">
+            {filteredNav.map((item) => {
+              const active = pathname === item.href || pathname.startsWith(item.href + "/");
+              return (
+                <Link key={item.href} href={item.href} className={`nav-item${active ? " active" : ""}`} onClick={() => setSidebarOpen(false)}>
+                  <span className="nav-item-icon">{item.icon}</span>
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="sidebar-footer">
+            <div className="sidebar-user">
+              <div className="sidebar-avatar">{initial}</div>
+              <div className="sidebar-user-info">
+                <div className="sidebar-user-name">{userName}</div>
+                <div className="sidebar-user-email">{userEmail}</div>
+              </div>
+            </div>
+            <button className="btn-signout" onClick={() => signOut({ callbackUrl: "/login" })}>
+              🚪 Toka / Sign Out
+            </button>
+          </div>
+        </aside>
+
+        {/* Main */}
+        <div className="main-area">
+          {/* Topbar */}
+          <header className="topbar">
+            <div className="topbar-left">{currentLabel}</div>
+            <div className="topbar-right">
+              <div className="topbar-bell">🔔</div>
+              <div className="topbar-user">
+                <div className="topbar-avatar">{initial}</div>
+                <div>
+                  <div className="topbar-name">{userName}</div>
+                  <div className="topbar-role">{role?.replace("_", " ") || "User"}</div>
+                </div>
+                <span style={{color:"#9ca3af",fontSize:"12px"}}>▼</span>
+              </div>
+            </div>
+          </header>
+
+          {/* Content */}
+          <main className="page-content">
+            {children}
+          </main>
         </div>
-      )}
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Bar */}
-        <header className="h-14 border-b bg-background flex items-center justify-between px-4 flex-shrink-0">
-          <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-1.5 rounded-lg hover:bg-muted">
-            <Menu className="w-5 h-5" />
-          </button>
-          <div className="hidden lg:block">
-            <h2 className="text-sm font-semibold text-muted-foreground">
-              {filteredNav.find(n => pathname.startsWith(n.href))?.label || "Dashboard"}
-            </h2>
-          </div>
-          <div className="flex items-center gap-3 ml-auto">
-            <div className={cn("hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium",
-              isOnline ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-            )}>
-              {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-              {isOnline ? "Online" : "Offline"}
-            </div>
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
-              {session?.user?.name?.charAt(0).toUpperCase()}
-            </div>
-          </div>
-        </header>
-
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
+        {/* Mobile FAB */}
+        <button className="mobile-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>☰</button>
       </div>
-    </div>
+    </>
   );
 }
