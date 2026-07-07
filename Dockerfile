@@ -44,11 +44,12 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
 COPY start.sh ./start.sh
 
 USER root
 RUN chmod +x ./start.sh
+# Fix prisma wasm symlink - create proper bin script
+RUN printf '#!/bin/sh\nexec node /app/node_modules/prisma/build/index.js "$@"\n' > /app/node_modules/.bin/prisma && chmod +x /app/node_modules/.bin/prisma
 USER nextjs
 
 EXPOSE 3000
