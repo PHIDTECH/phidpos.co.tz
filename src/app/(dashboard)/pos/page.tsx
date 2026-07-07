@@ -312,43 +312,90 @@ export default function POSPage() {
     { value: "CREDIT", label: "Credit", icon: User },
   ];
 
+  const S: Record<string, React.CSSProperties> = {
+    wrap:       { display:"flex", height:"calc(100vh - 60px)", background:"#f3f4f6", fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" },
+    left:       { flex:1, display:"flex", flexDirection:"column", minWidth:0 },
+    searchBar:  { background:"#fff", borderBottom:"1px solid #e5e7eb", padding:"12px 16px", display:"flex", alignItems:"center", gap:10 },
+    searchWrap: { flex:1, position:"relative" },
+    searchIcon: { position:"absolute", left:10, top:"50%", transform:"translateY(-50%)", color:"#9ca3af", fontSize:14 },
+    searchInput:{ width:"100%", paddingLeft:32, paddingRight:12, paddingTop:9, paddingBottom:9, border:"1px solid #e5e7eb", borderRadius:10, fontSize:13, outline:"none", boxSizing:"border-box" as const },
+    statusBadge:(online: boolean) => ({ display:"flex", alignItems:"center", gap:5, fontSize:12, fontWeight:600, padding:"6px 12px", borderRadius:8, border:`1px solid ${online?"#bbf7d0":"#fecaca"}`, background:online?"#f0fdf4":"#fef2f2", color:online?"#16a34a":"#dc2626", whiteSpace:"nowrap" as const }),
+    syncBtn:    { display:"flex", alignItems:"center", gap:5, fontSize:12, fontWeight:600, padding:"6px 12px", borderRadius:8, border:"1px solid #fed7aa", background:"#fff7ed", color:"#c2410c", cursor:"pointer", whiteSpace:"nowrap" as const },
+    grid:       { flex:1, overflowY:"auto" as const, padding:16 },
+    gridInner:  { display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))", gap:12 },
+    prodCard:   (disabled: boolean) => ({ background:"#fff", border:"1px solid #e5e7eb", borderRadius:12, padding:12, textAlign:"left" as const, cursor:disabled?"not-allowed":"pointer", opacity:disabled?0.5:1, transition:"box-shadow 0.15s,border-color 0.15s" }),
+    prodImg:    { width:"100%", height:56, background:"linear-gradient(135deg,#eff6ff,#eef2ff)", borderRadius:8, marginBottom:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22 },
+    prodName:   { fontSize:12, fontWeight:700, color:"#111", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" as const, marginBottom:2 },
+    prodPrice:  { fontSize:13, fontWeight:800, color:"#2563eb" },
+    prodStock:  (low: boolean) => ({ fontSize:11, color:low?"#ef4444":"#9ca3af", marginTop:2 }),
+    emptyGrid:  { gridColumn:"1/-1", textAlign:"center" as const, padding:"48px 0", color:"#d1d5db" },
+    right:      { width:360, display:"flex", flexDirection:"column" as const, background:"#fff", borderLeft:"1px solid #e5e7eb", boxShadow:"-2px 0 8px rgba(0,0,0,0.04)" },
+    cartHdr:    { padding:"12px 16px", borderBottom:"1px solid #e5e7eb", display:"flex", alignItems:"center", justifyContent:"space-between" },
+    cartTitle:  { fontWeight:800, fontSize:15, color:"#111", display:"flex", alignItems:"center", gap:8 },
+    cartBadge:  { background:"#2563eb", color:"#fff", borderRadius:"50%", width:20, height:20, fontSize:11, fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center" },
+    clearBtn:   { fontSize:12, color:"#ef4444", background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", gap:4, fontWeight:600 },
+    custWrap:   { padding:"10px 16px", borderBottom:"1px solid #e5e7eb", position:"relative" as const },
+    custInp:    { width:"100%", paddingLeft:32, paddingRight:12, paddingTop:8, paddingBottom:8, border:"1px solid #e5e7eb", borderRadius:10, fontSize:13, outline:"none", boxSizing:"border-box" as const },
+    custDrop:   { position:"absolute" as const, left:16, right:16, top:46, background:"#fff", border:"1px solid #e5e7eb", borderRadius:10, boxShadow:"0 8px 24px rgba(0,0,0,0.12)", zIndex:10, overflow:"hidden" },
+    custRow:    { width:"100%", textAlign:"left" as const, padding:"10px 14px", fontSize:13, borderBottom:"1px solid #f3f4f6", background:"none", border:"none", cursor:"pointer" },
+    cartList:   { flex:1, overflowY:"auto" as const },
+    emptyCart:  { display:"flex", flexDirection:"column" as const, alignItems:"center", justifyContent:"center", height:"100%", color:"#d1d5db" },
+    cartItem:   { padding:"10px 16px", borderBottom:"1px solid #f3f4f6" },
+    qtyBtn:     { width:26, height:26, borderRadius:"50%", border:"1px solid #e5e7eb", background:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:700 },
+    cartFooter: { borderTop:"1px solid #e5e7eb", background:"#f9fafb", padding:16 },
+    totRow:     { display:"flex", justifyContent:"space-between", fontSize:13, color:"#6b7280", marginBottom:6 },
+    totFinal:   { display:"flex", justifyContent:"space-between", fontSize:16, fontWeight:800, color:"#111", paddingTop:8, borderTop:"1px solid #e5e7eb", marginBottom:14 },
+    chargeBtn:  (empty: boolean) => ({ width:"100%", background:empty?"#d1d5db":"#2563eb", color:"#fff", border:"none", borderRadius:12, padding:"13px 0", fontSize:15, fontWeight:800, cursor:empty?"not-allowed":"pointer" }),
+    overlay:    { position:"fixed" as const, inset:0, background:"rgba(0,0,0,0.6)", zIndex:50, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
+    modal:      { background:"#fff", borderRadius:20, width:"100%", maxWidth:420, boxShadow:"0 24px 64px rgba(0,0,0,0.2)" },
+    modalHdr:   { padding:"18px 20px", borderBottom:"1px solid #e5e7eb", display:"flex", alignItems:"center", justifyContent:"space-between" },
+    modalTitle: { fontSize:16, fontWeight:800, color:"#111" },
+    closeBtn:   { background:"none", border:"none", fontSize:20, cursor:"pointer", color:"#9ca3af", lineHeight:1 },
+    modalBody:  { padding:20 },
+    amtBox:     { background:"#eff6ff", borderRadius:14, padding:"16px 20px", textAlign:"center" as const, marginBottom:16 },
+    pmGrid:     { display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, marginTop:8 },
+    pmBtn:      (active: boolean) => ({ display:"flex", flexDirection:"column" as const, alignItems:"center", gap:4, padding:"12px 4px", borderRadius:12, border:`2px solid ${active?"#2563eb":"#e5e7eb"}`, background:active?"#eff6ff":"#fff", color:active?"#2563eb":"#6b7280", cursor:"pointer", fontSize:11, fontWeight:600 }),
+    qkGrid:     { display:"flex", gap:6, marginTop:8 },
+    qkBtn:      { flex:1, padding:"7px 4px", background:"#f3f4f6", border:"none", borderRadius:8, fontSize:11, fontWeight:600, cursor:"pointer" },
+    changePill: (pos: boolean) => ({ display:"flex", justifyContent:"space-between", padding:"10px 14px", borderRadius:10, background:pos?"#f0fdf4":"#fef2f2", color:pos?"#16a34a":"#dc2626", fontWeight:700, fontSize:13, marginTop:8 }),
+    modalFtr:   { padding:"14px 20px", borderTop:"1px solid #e5e7eb", display:"flex", gap:10 },
+    cancelBtn:  { flex:1, padding:"11px 0", borderRadius:12, border:"1px solid #e5e7eb", background:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", color:"#374151" },
+    confirmBtn: (dis: boolean) => ({ flex:1, padding:"11px 0", borderRadius:12, border:"none", background:dis?"#d1d5db":"#2563eb", color:"#fff", fontSize:14, fontWeight:700, cursor:dis?"not-allowed":"pointer" }),
+    receiptMdl: { background:"#fff", borderRadius:20, width:"100%", maxWidth:360, boxShadow:"0 24px 64px rgba(0,0,0,0.2)" },
+    receiptBody:{ padding:20, fontFamily:"monospace", fontSize:12 },
+  };
+
   return (
-    <div className="flex h-[calc(100vh-56px)] bg-gray-50">
-      {/* Left: Products Panel */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Search Bar */}
-        <div className="bg-white border-b px-4 py-3">
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                ref={searchRef}
-                type="text"
-                value={searchQuery}
-                onChange={e => handleSearch(e.target.value)}
-                onKeyDown={handleBarcodeSearch}
-                placeholder="Search by name, barcode or SKU… (press Enter for barcode)"
-                className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              />
-            </div>
-            <div className={`flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium border ${isOnline ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-700"}`}>
-              {isOnline ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
-              {isOnline ? "Online" : "Offline"}
-            </div>
-            {offlineCount > 0 && (
-              <button onClick={syncOfflineSales} disabled={!isOnline || syncing}
-                className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-medium border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 disabled:opacity-50"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
-                {syncing ? "Syncing…" : `Sync (${offlineCount})`}
-              </button>
-            )}
+    <div style={S.wrap}>
+      {/* ── Left: Products ── */}
+      <div style={S.left}>
+        {/* Search */}
+        <div style={S.searchBar}>
+          <div style={S.searchWrap}>
+            <span style={S.searchIcon}>🔍</span>
+            <input
+              ref={searchRef}
+              type="text"
+              value={searchQuery}
+              onChange={e => handleSearch(e.target.value)}
+              onKeyDown={handleBarcodeSearch}
+              placeholder="Tafuta bidhaa, barcode au SKU… (Enter kwa barcode)"
+              style={S.searchInput}
+            />
           </div>
+          <div style={S.statusBadge(isOnline)}>
+            {isOnline ? "🟢 Mtandaoni" : "🔴 Nje ya mtandao"}
+          </div>
+          {offlineCount > 0 && (
+            <button onClick={syncOfflineSales} disabled={!isOnline || syncing} style={S.syncBtn}>
+              {syncing ? "⏳" : "🔄"} {syncing ? "Inasync…" : `Sync (${offlineCount})`}
+            </button>
+          )}
         </div>
 
         {/* Product Grid */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+        <div style={S.grid}>
+          <div style={S.gridInner}>
             {filteredProducts.map(product => {
               const stock = product.inventories?.[0]?.quantity ?? 0;
               const useWholesale = customer?.type === "WHOLESALE" && product.wholesalePrice;
@@ -358,74 +405,67 @@ export default function POSPage() {
                   key={product.id}
                   onClick={() => addToCart(product)}
                   disabled={stock <= 0}
-                  className={`bg-white border rounded-xl p-3 text-left hover:border-blue-400 hover:shadow-md transition-all active:scale-95 ${stock <= 0 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  style={S.prodCard(stock <= 0)}
                 >
-                  <div className="w-full h-14 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg mb-2 flex items-center justify-center">
-                    <ShoppingCart className="w-6 h-6 text-blue-400" />
-                  </div>
-                  <p className="text-xs font-semibold text-gray-800 truncate leading-tight">{product.name}</p>
-                  <p className="text-sm font-bold text-blue-600 mt-1">{formatCurrency(price, "TZS")}</p>
-                  <p className={`text-xs mt-0.5 ${stock <= 5 ? "text-red-500" : "text-gray-400"}`}>Stock: {stock}</p>
+                  <div style={S.prodImg}>🛍️</div>
+                  <div style={S.prodName}>{product.name}</div>
+                  <div style={S.prodPrice}>{formatCurrency(price, "TZS")}</div>
+                  <div style={S.prodStock(stock <= 5)}>Hifadhi: {stock}</div>
                 </button>
               );
             })}
             {filteredProducts.length === 0 && (
-              <div className="col-span-full text-center py-16 text-gray-400">
-                <Search className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p>No products found</p>
+              <div style={S.emptyGrid}>
+                <div style={{fontSize:40,marginBottom:8}}>🔍</div>
+                <div style={{fontSize:13}}>Hakuna bidhaa zilizopatikana</div>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Right: Cart Panel */}
-      <div className="w-96 flex flex-col bg-white border-l shadow-lg">
+      {/* ── Right: Cart ── */}
+      <div style={S.right}>
         {/* Cart Header */}
-        <div className="px-4 py-3 border-b flex items-center justify-between">
-          <h2 className="font-bold text-gray-800 flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5" /> Cart
-            {cart.length > 0 && <span className="bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{cart.length}</span>}
-          </h2>
+        <div style={S.cartHdr}>
+          <div style={S.cartTitle}>
+            🛒 Mkoba
+            {cart.length > 0 && <span style={S.cartBadge}>{cart.length}</span>}
+          </div>
           {cart.length > 0 && (
-            <button onClick={() => setCart([])} className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1">
-              <Trash2 className="w-3.5 h-3.5" /> Clear
-            </button>
+            <button onClick={() => setCart([])} style={S.clearBtn}>🗑 Futa</button>
           )}
         </div>
 
-        {/* Customer Select */}
-        <div className="px-4 py-2 border-b relative">
-          <div className="relative">
-            <User className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        {/* Customer */}
+        <div style={S.custWrap}>
+          <div style={{position:"relative"}}>
+            <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",fontSize:14}}>👤</span>
             <input
               type="text"
               value={customer ? customer.name : customerSearch}
               onChange={e => { setCustomer(null); searchCustomers(e.target.value); }}
-              placeholder="Search customer (optional)"
-              className="w-full pl-8 pr-8 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+              placeholder="Tafuta mteja (si lazima)"
+              style={S.custInp}
             />
             {customer && (
-              <button onClick={() => { setCustomer(null); setCustomerSearch(""); }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                <X className="w-4 h-4" />
-              </button>
+              <button onClick={() => { setCustomer(null); setCustomerSearch(""); }}
+                style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#9ca3af"}}>×</button>
             )}
           </div>
           {customer && (
-            <div className="mt-1 text-xs text-gray-500 flex gap-2">
-              <span className={`px-2 py-0.5 rounded-full font-medium ${customer.type === "WHOLESALE" ? "bg-purple-100 text-purple-700" : customer.type === "VIP" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"}`}>{customer.type}</span>
-              <span>⭐ {customer.loyaltyPoints} pts</span>
-              {customer.totalDebt > 0 && <span className="text-red-500">Debt: {formatCurrency(customer.totalDebt, "TZS")}</span>}
+            <div style={{marginTop:6,display:"flex",gap:6,fontSize:11}}>
+              <span style={{padding:"2px 8px",borderRadius:20,background:"#eff6ff",color:"#2563eb",fontWeight:700}}>{customer.type}</span>
+              <span style={{color:"#9ca3af"}}>⭐ {customer.loyaltyPoints} pts</span>
+              {customer.totalDebt > 0 && <span style={{color:"#ef4444"}}>Deni: {formatCurrency(customer.totalDebt,"TZS")}</span>}
             </div>
           )}
           {showCustomerDropdown && customers.length > 0 && (
-            <div className="absolute left-4 right-4 top-12 bg-white border rounded-lg shadow-xl z-10 overflow-hidden">
+            <div style={S.custDrop}>
               {customers.map(c => (
-                <button key={c.id} onClick={() => { setCustomer(c); setShowCustomerDropdown(false); }}
-                  className="w-full text-left px-3 py-2.5 hover:bg-blue-50 text-sm border-b last:border-0"
-                >
-                  <p className="font-medium">{c.name}</p>
-                  <p className="text-xs text-gray-400">{c.phone} · {c.type}</p>
+                <button key={c.id} onClick={() => { setCustomer(c); setShowCustomerDropdown(false); }} style={S.custRow}>
+                  <div style={{fontWeight:700,fontSize:13}}>{c.name}</div>
+                  <div style={{fontSize:11,color:"#9ca3af"}}>{c.phone} · {c.type}</div>
                 </button>
               ))}
             </div>
@@ -433,217 +473,151 @@ export default function POSPage() {
         </div>
 
         {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto">
+        <div style={S.cartList}>
           {cart.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-300">
-              <ShoppingCart className="w-16 h-16 mb-3" />
-              <p className="text-sm">Cart is empty</p>
-              <p className="text-xs">Click products or scan barcode</p>
+            <div style={S.emptyCart}>
+              <div style={{fontSize:48,marginBottom:8}}>🛒</div>
+              <div style={{fontSize:13,fontWeight:600}}>Mkoba uko tupu</div>
+              <div style={{fontSize:11,color:"#9ca3af",marginTop:4}}>Bonyeza bidhaa au scan barcode</div>
             </div>
           ) : (
-            <div className="divide-y">
-              {cart.map(item => (
-                <div key={item.productId} className="px-4 py-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-medium text-gray-800 flex-1 leading-tight">{item.name}</p>
-                    <button onClick={() => removeFromCart(item.productId)} className="text-red-400 hover:text-red-600 flex-shrink-0">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+            cart.map(item => (
+              <div key={item.productId} style={S.cartItem}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+                  <div style={{fontSize:13,fontWeight:700,color:"#111",flex:1,paddingRight:8}}>{item.name}</div>
+                  <button onClick={() => removeFromCart(item.productId)} style={{background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#ef4444"}}>🗑</button>
+                </div>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <button onClick={() => updateQty(item.productId,-1)} style={S.qtyBtn}>−</button>
+                    <span style={{fontSize:14,fontWeight:800,minWidth:24,textAlign:"center"}}>{item.quantity}</span>
+                    <button onClick={() => updateQty(item.productId,1)} style={S.qtyBtn}>+</button>
                   </div>
-                  <div className="flex items-center justify-between mt-2">
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => updateQty(item.productId, -1)} className="w-6 h-6 rounded-full border flex items-center justify-center hover:bg-gray-100">
-                        <Minus className="w-3 h-3" />
-                      </button>
-                      <span className="w-8 text-center text-sm font-semibold">{item.quantity}</span>
-                      <button onClick={() => updateQty(item.productId, 1)} className="w-6 h-6 rounded-full border flex items-center justify-center hover:bg-gray-100">
-                        <Plus className="w-3 h-3" />
-                      </button>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-400">{formatCurrency(item.unitPrice, "TZS")} × {item.quantity}</p>
-                      <p className="text-sm font-bold text-blue-600">{formatCurrency(item.total, "TZS")}</p>
-                    </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontSize:11,color:"#9ca3af"}}>{formatCurrency(item.unitPrice,"TZS")} × {item.quantity}</div>
+                    <div style={{fontSize:14,fontWeight:800,color:"#2563eb"}}>{formatCurrency(item.total,"TZS")}</div>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))
           )}
         </div>
 
         {/* Cart Footer */}
-        <div className="border-t bg-gray-50 p-4 space-y-3">
-          {/* Discount */}
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600 w-20 flex-shrink-0">Discount</label>
+        <div style={S.cartFooter}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+            <label style={{fontSize:13,color:"#6b7280",width:70,flexShrink:0}}>Punguzo</label>
             <input
-              type="number" min="0" max={subtotal} value={discount || ""}
-              onChange={e => setDiscount(parseFloat(e.target.value) || 0)}
+              type="number" min="0" max={subtotal} value={discount||""}
+              onChange={e => setDiscount(parseFloat(e.target.value)||0)}
               placeholder="0"
-              className="flex-1 px-3 py-1.5 border rounded-lg text-sm text-right focus:ring-1 focus:ring-blue-500 outline-none"
+              style={{flex:1,padding:"7px 10px",border:"1px solid #e5e7eb",borderRadius:8,fontSize:13,textAlign:"right",outline:"none"}}
             />
           </div>
-
-          {/* Totals */}
-          <div className="space-y-1 text-sm">
-            <div className="flex justify-between text-gray-500">
-              <span>Subtotal</span>
-              <span>{formatCurrency(subtotal, "TZS")}</span>
-            </div>
-            {discount > 0 && (
-              <div className="flex justify-between text-green-600">
-                <span>Discount</span>
-                <span>- {formatCurrency(discount, "TZS")}</span>
-              </div>
-            )}
-            <div className="flex justify-between font-bold text-lg text-gray-900 pt-1 border-t">
-              <span>Total</span>
-              <span>{formatCurrency(total, "TZS")}</span>
-            </div>
-          </div>
-
-          <button
-            onClick={() => setShowPaymentModal(true)}
-            disabled={cart.length === 0}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white font-bold py-3 rounded-xl transition-colors text-base"
-          >
-            Charge {formatCurrency(total, "TZS")}
+          <div style={S.totRow}><span>Jumla ndogo</span><span>{formatCurrency(subtotal,"TZS")}</span></div>
+          {discount > 0 && <div style={{...S.totRow,color:"#16a34a"}}><span>Punguzo</span><span>− {formatCurrency(discount,"TZS")}</span></div>}
+          <div style={S.totFinal}><span>JUMLA</span><span>{formatCurrency(total,"TZS")}</span></div>
+          <button onClick={() => setShowPaymentModal(true)} disabled={cart.length===0} style={S.chargeBtn(cart.length===0)}>
+            Lipia {formatCurrency(total,"TZS")}
           </button>
         </div>
       </div>
 
-      {/* Payment Modal */}
+      {/* ── Payment Modal ── */}
       {showPaymentModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
-            <div className="flex items-center justify-between p-5 border-b">
-              <h3 className="text-lg font-bold">Complete Payment</h3>
-              <button onClick={() => setShowPaymentModal(false)} className="text-gray-400 hover:text-gray-600">
-                <X className="w-5 h-5" />
-              </button>
+        <div style={S.overlay}>
+          <div style={S.modal}>
+            <div style={S.modalHdr}>
+              <div style={S.modalTitle}>Malipo</div>
+              <button onClick={() => setShowPaymentModal(false)} style={S.closeBtn}>×</button>
             </div>
-            <div className="p-5 space-y-4">
-              {/* Amount Due */}
-              <div className="bg-blue-50 rounded-xl p-4 text-center">
-                <p className="text-sm text-blue-600 font-medium">Amount Due</p>
-                <p className="text-3xl font-bold text-blue-700">{formatCurrency(total, "TZS")}</p>
-                {customer && <p className="text-sm text-blue-500 mt-1">Customer: {customer.name}</p>}
+            <div style={S.modalBody}>
+              <div style={S.amtBox}>
+                <div style={{fontSize:12,color:"#2563eb",fontWeight:600,marginBottom:4}}>Kiasi Kinachohitajika</div>
+                <div style={{fontSize:32,fontWeight:900,color:"#1d4ed8"}}>{formatCurrency(total,"TZS")}</div>
+                {customer && <div style={{fontSize:12,color:"#3b82f6",marginTop:4}}>Mteja: {customer.name}</div>}
               </div>
-
-              {/* Payment Method */}
-              <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">Payment Method</p>
-                <div className="grid grid-cols-4 gap-2">
-                  {paymentMethods.map(pm => {
-                    const Icon = pm.icon;
-                    return (
-                      <button key={pm.value} onClick={() => setPaymentMethod(pm.value as any)}
-                        className={`flex flex-col items-center gap-1 py-3 rounded-xl border-2 text-xs font-medium transition-all ${paymentMethod === pm.value ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 text-gray-500 hover:border-gray-300"}`}
-                      >
-                        <Icon className="w-5 h-5" />
-                        {pm.label}
-                      </button>
-                    );
-                  })}
-                </div>
+              <div style={{fontSize:13,fontWeight:700,color:"#374151",marginBottom:6}}>Njia ya Malipo</div>
+              <div style={S.pmGrid}>
+                {paymentMethods.map(pm => (
+                  <button key={pm.value} onClick={() => setPaymentMethod(pm.value as any)} style={S.pmBtn(paymentMethod===pm.value)}>
+                    <span style={{fontSize:20}}>{pm.value==="CASH"?"💵":pm.value==="MOBILE_MONEY"?"📱":pm.value==="BANK_TRANSFER"?"🏦":"📋"}</span>
+                    {pm.label}
+                  </button>
+                ))}
               </div>
-
-              {/* Amount Paid */}
               {paymentMethod !== "CREDIT" && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Amount Paid</label>
+                <div style={{marginTop:16}}>
+                  <label style={{fontSize:13,fontWeight:700,color:"#374151"}}>Kiasi Kilicholipwa</label>
                   <input
                     type="number" value={amountPaid}
                     onChange={e => setAmountPaid(e.target.value)}
                     placeholder={total.toString()}
-                    className="w-full mt-1 px-4 py-3 border-2 rounded-xl text-lg text-right font-bold focus:ring-2 focus:ring-blue-500 outline-none"
                     autoFocus
+                    style={{width:"100%",marginTop:6,padding:"12px 14px",border:"2px solid #e5e7eb",borderRadius:12,fontSize:18,textAlign:"right",fontWeight:800,outline:"none",boxSizing:"border-box"}}
                   />
-                  {/* Quick amounts */}
-                  <div className="flex gap-2 mt-2">
-                    {[total, Math.ceil(total / 1000) * 1000, Math.ceil(total / 5000) * 5000, Math.ceil(total / 10000) * 10000]
-                      .filter((v, i, arr) => arr.indexOf(v) === i).slice(0, 4).map(amt => (
-                        <button key={amt} onClick={() => setAmountPaid(amt.toString())}
-                          className="flex-1 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-medium"
-                        >
-                          {formatCurrency(amt, "TZS")}
-                        </button>
-                      ))}
+                  <div style={S.qkGrid}>
+                    {[total,Math.ceil(total/1000)*1000,Math.ceil(total/5000)*5000,Math.ceil(total/10000)*10000]
+                      .filter((v,i,a)=>a.indexOf(v)===i).slice(0,4).map(amt=>(
+                        <button key={amt} onClick={()=>setAmountPaid(amt.toString())} style={S.qkBtn}>{formatCurrency(amt,"TZS")}</button>
+                    ))}
                   </div>
                 </div>
               )}
-
-              {/* Change */}
-              {paymentMethod !== "CREDIT" && parseFloat(amountPaid || "0") > 0 && (
-                <div className={`flex justify-between px-4 py-3 rounded-xl text-sm font-bold ${change >= 0 ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
-                  <span>{change >= 0 ? "Change" : "Balance Due"}</span>
-                  <span>{formatCurrency(Math.abs(change), "TZS")}</span>
+              {paymentMethod!=="CREDIT" && parseFloat(amountPaid||"0")>0 && (
+                <div style={S.changePill(change>=0)}>
+                  <span>{change>=0?"Chenji":"Baki"}</span>
+                  <span>{formatCurrency(Math.abs(change),"TZS")}</span>
                 </div>
               )}
-
-              {paymentMethod === "CREDIT" && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
-                  ⚠️ Full amount of {formatCurrency(total, "TZS")} will be added to customer debt.
-                  {!customer && " Please select a customer."}
+              {paymentMethod==="CREDIT" && (
+                <div style={{marginTop:12,padding:"10px 14px",borderRadius:10,background:"#fffbeb",border:"1px solid #fde68a",color:"#92400e",fontSize:13}}>
+                  ⚠️ {formatCurrency(total,"TZS")} itaongezwa kwa deni la mteja.{!customer&&" Tafadhali chagua mteja."}
                 </div>
               )}
             </div>
-            <div className="p-5 border-t flex gap-3">
-              <button onClick={() => setShowPaymentModal(false)} className="flex-1 py-3 rounded-xl border font-medium text-gray-600 hover:bg-gray-50">
-                Cancel
-              </button>
-              <button
-                onClick={completeSale}
-                disabled={processing || (paymentMethod === "CREDIT" && !customer)}
-                className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white font-bold transition-colors"
-              >
-                {processing ? "Processing…" : "Complete Sale"}
+            <div style={S.modalFtr}>
+              <button onClick={()=>setShowPaymentModal(false)} style={S.cancelBtn}>Ghairi</button>
+              <button onClick={completeSale} disabled={processing||(paymentMethod==="CREDIT"&&!customer)} style={S.confirmBtn(processing||(paymentMethod==="CREDIT"&&!customer))}>
+                {processing?"Inashughulikiwa…":"Kamilisha Mauzo"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Receipt Modal */}
+      {/* ── Receipt Modal ── */}
       {showReceipt && lastReceipt && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
-            <div className="p-5 border-b flex items-center justify-between">
-              <h3 className="font-bold text-green-600">✓ Sale Complete!</h3>
-              <button onClick={() => setShowReceipt(false)} className="text-gray-400 hover:text-gray-600">
-                <X className="w-5 h-5" />
-              </button>
+        <div style={S.overlay}>
+          <div style={S.receiptMdl}>
+            <div style={S.modalHdr}>
+              <div style={{fontSize:15,fontWeight:800,color:"#16a34a"}}>✓ Mauzo Yamekamilika!</div>
+              <button onClick={()=>setShowReceipt(false)} style={S.closeBtn}>×</button>
             </div>
-            <div id="receipt-content" className="p-5 font-mono text-xs">
-              <p className="text-center font-bold text-base mb-1">RECEIPT</p>
-              <p className="text-center text-gray-500 mb-1">{lastReceipt.offline ? "⚠ Offline Sale" : "✓ Online Sale"}</p>
-              <p className="text-center mb-3">{lastReceipt.receiptNumber}</p>
-              <div className="border-t border-dashed pt-2 mb-2">
-                {lastReceipt.items?.map((item: CartItem) => (
-                  <div key={item.productId} className="flex justify-between mb-1">
-                    <span className="flex-1 truncate">{item.name} x{item.quantity}</span>
-                    <span className="ml-2">{formatCurrency(item.total, "TZS")}</span>
+            <div style={S.receiptBody}>
+              <div style={{textAlign:"center",marginBottom:12}}>
+                <div style={{fontSize:16,fontWeight:900}}>RISITI</div>
+                <div style={{fontSize:11,color:"#9ca3af"}}>{lastReceipt.offline?"⚠ Mauzo ya Nje ya Mtandao":"✓ Mauzo ya Mtandaoni"}</div>
+                <div style={{fontWeight:700,marginTop:2}}>{lastReceipt.receiptNumber}</div>
+              </div>
+              <div style={{borderTop:"1px dashed #d1d5db",paddingTop:10,marginBottom:10}}>
+                {lastReceipt.items?.map((item: CartItem)=>(
+                  <div key={item.productId} style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                    <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.name} x{item.quantity}</span>
+                    <span style={{marginLeft:8}}>{formatCurrency(item.total,"TZS")}</span>
                   </div>
                 ))}
               </div>
-              <div className="border-t border-dashed pt-2 space-y-0.5">
-                {lastReceipt.discount > 0 && (
-                  <div className="flex justify-between"><span>Discount</span><span>-{formatCurrency(lastReceipt.discount, "TZS")}</span></div>
-                )}
-                <div className="flex justify-between font-bold"><span>TOTAL</span><span>{formatCurrency(lastReceipt.total, "TZS")}</span></div>
+              <div style={{borderTop:"1px dashed #d1d5db",paddingTop:8}}>
+                {lastReceipt.discount>0&&<div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span>Punguzo</span><span>-{formatCurrency(lastReceipt.discount,"TZS")}</span></div>}
+                <div style={{display:"flex",justifyContent:"space-between",fontWeight:900,fontSize:14}}><span>JUMLA</span><span>{formatCurrency(lastReceipt.total,"TZS")}</span></div>
               </div>
-              {lastReceipt.customer && (
-                <p className="mt-2 text-center text-gray-500">Customer: {lastReceipt.customer.name}</p>
-              )}
-              <p className="text-center text-gray-400 mt-3">Thank you for shopping!</p>
+              {lastReceipt.customer&&<div style={{marginTop:10,textAlign:"center",color:"#6b7280"}}>Mteja: {lastReceipt.customer.name}</div>}
+              <div style={{textAlign:"center",color:"#9ca3af",marginTop:10}}>Asante kwa ununuzi!</div>
             </div>
-            <div className="p-4 flex gap-2 border-t">
-              <button onClick={() => { window.print(); }} className="flex-1 py-2.5 rounded-xl border font-medium text-sm flex items-center justify-center gap-2 hover:bg-gray-50">
-                <Printer className="w-4 h-4" /> Print
-              </button>
-              <button onClick={() => setShowReceipt(false)} className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white font-medium text-sm hover:bg-blue-700">
-                New Sale
-              </button>
+            <div style={{padding:"12px 16px",borderTop:"1px solid #e5e7eb",display:"flex",gap:8}}>
+              <button onClick={()=>window.print()} style={{...S.cancelBtn,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>🖨 Chapa</button>
+              <button onClick={()=>setShowReceipt(false)} style={{...S.confirmBtn(false),border:"none"}}>Mauzo Mapya</button>
             </div>
           </div>
         </div>

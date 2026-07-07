@@ -2,67 +2,25 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLang, type Lang } from "@/lib/i18n";
 
-type SubItem = { href: string; label: string; labelSw: string };
-type NavItem = { href: string; key: string; icon: string; color: string; bg: string; roles: string[]; sub?: SubItem[] };
+type NavItem = { href: string; key: string; icon: string; color: string; bg: string; roles: string[] };
 
 const navItems: NavItem[] = [
   { href: "/dashboard", key: "dashboard", icon: "📊", color: "#2563eb", bg: "#eff6ff", roles: ["SUPER_ADMIN","TENANT_ADMIN","STORE_MANAGER","CASHIER","ACCOUNTANT"] },
-  { href: "/pos",       key: "pos",       icon: "🛒", color: "#16a34a", bg: "#f0fdf4", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"],
-    sub: [
-      { href: "/pos",              label: "New Sale",        labelSw: "Mauzo Mapya" },
-      { href: "/pos/history",      label: "Sales History",   labelSw: "Historia ya Mauzo" },
-    ]
-  },
-  { href: "/products",  key: "products",  icon: "📦", color: "#7c3aed", bg: "#f5f3ff", roles: ["TENANT_ADMIN","STORE_MANAGER","ACCOUNTANT"],
-    sub: [
-      { href: "/products",         label: "All Products",    labelSw: "Bidhaa Zote" },
-      { href: "/products/categories", label: "Categories",   labelSw: "Kategoria" },
-    ]
-  },
-  { href: "/inventory", key: "inventory", icon: "🏪", color: "#0891b2", bg: "#ecfeff", roles: ["TENANT_ADMIN","STORE_MANAGER"],
-    sub: [
-      { href: "/inventory",        label: "Stock Levels",    labelSw: "Hifadhi" },
-      { href: "/inventory/adjust", label: "Adjustments",     labelSw: "Marekebisho" },
-    ]
-  },
-  { href: "/customers", key: "customers", icon: "👥", color: "#db2777", bg: "#fdf2f8", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"],
-    sub: [
-      { href: "/customers",        label: "All Customers",   labelSw: "Wateja Wote" },
-      { href: "/customers/groups", label: "Groups",          labelSw: "Makundi" },
-    ]
-  },
+  { href: "/pos",       key: "pos",       icon: "🛒", color: "#16a34a", bg: "#f0fdf4", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"] },
+  { href: "/products",  key: "products",  icon: "📦", color: "#7c3aed", bg: "#f5f3ff", roles: ["TENANT_ADMIN","STORE_MANAGER","ACCOUNTANT"] },
+  { href: "/inventory", key: "inventory", icon: "🏪", color: "#0891b2", bg: "#ecfeff", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
+  { href: "/customers", key: "customers", icon: "👥", color: "#db2777", bg: "#fdf2f8", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"] },
   { href: "/suppliers", key: "suppliers", icon: "🚚", color: "#d97706", bg: "#fffbeb", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
-  { href: "/purchases", key: "purchases", icon: "🛍️", color: "#ea580c", bg: "#fff7ed", roles: ["TENANT_ADMIN","STORE_MANAGER"],
-    sub: [
-      { href: "/purchases",        label: "All Purchases",   labelSw: "Manunuzi Yote" },
-      { href: "/purchases/orders", label: "Purchase Orders", labelSw: "Maagizo" },
-    ]
-  },
-  { href: "/accounting",key: "accounting",icon: "📒", color: "#059669", bg: "#ecfdf5", roles: ["TENANT_ADMIN","ACCOUNTANT"],
-    sub: [
-      { href: "/accounting",         label: "Overview",      labelSw: "Muhtasari" },
-      { href: "/accounting/expenses",label: "Expenses",      labelSw: "Matumizi" },
-    ]
-  },
-  { href: "/reports",   key: "reports",   icon: "📈", color: "#4f46e5", bg: "#eef2ff", roles: ["TENANT_ADMIN","STORE_MANAGER","ACCOUNTANT"],
-    sub: [
-      { href: "/reports",          label: "Sales Report",    labelSw: "Ripoti ya Mauzo" },
-      { href: "/reports/inventory",label: "Inventory Report",labelSw: "Ripoti ya Hifadhi" },
-    ]
-  },
-  { href: "/settings",  key: "settings",  icon: "⚙️", color: "#374151", bg: "#f9fafb", roles: ["TENANT_ADMIN"],
-    sub: [
-      { href: "/settings",          label: "General",        labelSw: "Jumla" },
-      { href: "/settings/users",    label: "Users & Roles",  labelSw: "Watumiaji" },
-      { href: "/settings/stores",   label: "Stores",         labelSw: "Maduka" },
-    ]
-  },
+  { href: "/purchases", key: "purchases", icon: "🛍️", color: "#ea580c", bg: "#fff7ed", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
+  { href: "/accounting",key: "accounting",icon: "📒", color: "#059669", bg: "#ecfdf5", roles: ["TENANT_ADMIN","ACCOUNTANT"] },
+  { href: "/reports",   key: "reports",   icon: "📈", color: "#4f46e5", bg: "#eef2ff", roles: ["TENANT_ADMIN","STORE_MANAGER","ACCOUNTANT"] },
+  { href: "/settings",  key: "settings",  icon: "⚙️", color: "#374151", bg: "#f9fafb", roles: ["TENANT_ADMIN"] },
 ];
 
 const styles = `
@@ -218,8 +176,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const currentKey = activeItem?.key || "dashboard";
   const currentLabel = t[currentKey as keyof typeof t] || currentKey;
   const roleLabel = role?.replace(/_/g, " ") || "User";
-  const [expanded, setExpanded] = useState<string>(activeItem?.href || "");
-  useEffect(() => { if (activeItem) setExpanded(activeItem.href); }, [pathname]);
 
   return (
     <>
@@ -242,49 +198,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <nav className="sidebar-nav">
             {filteredNav.map((item) => {
               const active = pathname === item.href || pathname.startsWith(item.href + "/");
-              const isExpanded = expanded === item.href;
               const label = t[item.key as keyof typeof t] || item.key;
-              const hasSub = item.sub && item.sub.length > 0;
               return (
-                <div key={item.href}>
-                  {hasSub ? (
-                    <div
-                      className={`nav-item${active ? " active" : ""}${isExpanded ? " expanded" : ""}`}
-                      onClick={() => { setExpanded(isExpanded ? "" : item.href); }}
-                      style={{ userSelect: "none" }}
-                    >
-                      <span className="nav-icon-wrap" style={{ background: active ? "rgba(255,255,255,0.2)" : item.bg }}>{item.icon}</span>
-                      {label}
-                      <span className="nav-chevron">›</span>
-                    </div>
-                  ) : (
-                    <Link
-                      href={item.href}
-                      className={`nav-item${active ? " active" : ""}`}
-                      onClick={() => setSidebarOpen(false)}
-                    >
-                      <span className="nav-icon-wrap" style={{ background: active ? "rgba(255,255,255,0.2)" : item.bg }}>{item.icon}</span>
-                      {label}
-                      <span className="nav-chevron">›</span>
-                    </Link>
-                  )}
-                  {hasSub && isExpanded && (
-                    <div className="submenu">
-                      <div className="submenu-inner">
-                        {item.sub!.map(s => (
-                          <Link
-                            key={s.href}
-                            href={s.href}
-                            className={`sub-item${pathname === s.href ? " active" : ""}`}
-                            onClick={() => setSidebarOpen(false)}
-                          >
-                            {lang === "sw" ? s.labelSw : s.label}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`nav-item${active ? " active" : ""}`}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <span className="nav-icon-wrap" style={{ background: active ? "rgba(255,255,255,0.2)" : item.bg }}>{item.icon}</span>
+                  {label}
+                  <span className="nav-chevron">›</span>
+                </Link>
               );
             })}
           </nav>
