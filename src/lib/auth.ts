@@ -34,8 +34,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const isLoggedIn = !!authSession?.user;
       const isAuthPage =
         nextUrl.pathname.startsWith("/login") ||
-        nextUrl.pathname.startsWith("/register") ||
-        nextUrl.pathname === "/";
+        nextUrl.pathname.startsWith("/register");
+
+      const isPublicPage = nextUrl.pathname === "/";
 
       if (isAuthPage) {
         if (isLoggedIn) {
@@ -46,6 +47,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
         return true;
       }
+
+      if (isPublicPage) return true;
 
       if (!isLoggedIn) {
         return Response.redirect(new URL("/login", nextUrl));
