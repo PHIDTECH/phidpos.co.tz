@@ -40,6 +40,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       if (isAuthPage) {
         if (isLoggedIn) {
+          const role = (authSession?.user as any)?.role;
+          if (role === "SUPER_ADMIN") return Response.redirect(new URL("/superadmin", nextUrl));
           return Response.redirect(new URL("/dashboard", nextUrl));
         }
         return true;
@@ -62,21 +64,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        if (!credentials?.email || !credentials?.password) {
+          console.log("[AUTH] Missing credentials");
+          return null;
+        }
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email as string },
           include: { tenant: { select: { slug: true, status: true } } },
         });
 
-        if (!user || !user.isActive) return null;
+        if (!user) {
+          console.log("[AUTH] User not found:", credentials.email);
+          return null;
+        }
+        if (!user.isActive) {
+          console.log("[AUTH] User inactive:", credentials.email);
+          return null;
+        }
 
         const passwordMatch = await bcrypt.compare(
           credentials.password as string,
           user.password
         );
 
-        if (!passwordMatch) return null;
+        if (!passwordMatch) {
+          console.log("[AUTH] Password mismatch for:", credentials.email);
+          return null;
+        }
 
         if (user.tenant && user.tenant.status === "SUSPENDED") {
           throw new Error("TENANT_SUSPENDED");
