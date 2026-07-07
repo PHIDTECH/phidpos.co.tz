@@ -44,27 +44,27 @@ export async function GET(req: NextRequest) {
     });
     results.push("✅ Plans created");
 
-    // Super Admin
+    // Super Admin — always reset password
     const superAdminPassword = await bcrypt.hash("Phidtech@@2023", 12);
     await prisma.user.upsert({
       where: { email: "phidtechnology@gmail.com" },
-      update: { password: superAdminPassword, isActive: true },
+      update: { password: superAdminPassword, isActive: true, role: UserRole.SUPER_ADMIN },
       create: { name: "Super Admin", email: "phidtechnology@gmail.com", password: superAdminPassword, role: UserRole.SUPER_ADMIN, isActive: true },
     });
-    results.push("✅ Super Admin created: phidtechnology@gmail.com / Phidtech@@2023");
+    results.push("✅ Super Admin: phidtechnology@gmail.com / Phidtech@@2023");
 
-    // Demo Tenant
-    const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+    // Demo Tenant — force ACTIVE status
+    const trialEnd = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
     const demoTenant = await prisma.tenant.upsert({
       where: { slug: "demo-shop" },
-      update: {},
-      create: { name: "Demo Retail Shop", slug: "demo-shop", email: "demo@phidpos.co.tz", phone: "+255700000000", address: "Dar es Salaam, Tanzania", currency: "TZS", planId: professionalPlan.id, trialEndsAt: trialEnd },
+      update: { status: "ACTIVE", trialEndsAt: trialEnd },
+      create: { name: "Demo Retail Shop", slug: "demo-shop", email: "demo@phidpos.co.tz", phone: "+255700000000", address: "Dar es Salaam, Tanzania", currency: "TZS", planId: professionalPlan.id, trialEndsAt: trialEnd, status: "ACTIVE" },
     });
 
     await prisma.subscription.upsert({
       where: { id: "demo-subscription" },
-      update: {},
-      create: { id: "demo-subscription", tenantId: demoTenant.id, planId: professionalPlan.id, status: "TRIAL", amount: professionalPlan.monthlyPrice, startDate: new Date(), endDate: trialEnd, trialEndsAt: trialEnd },
+      update: { status: "ACTIVE", endDate: trialEnd },
+      create: { id: "demo-subscription", tenantId: demoTenant.id, planId: professionalPlan.id, status: "ACTIVE", amount: professionalPlan.monthlyPrice, startDate: new Date(), endDate: trialEnd, trialEndsAt: trialEnd },
     });
 
     const demoStore = await prisma.store.upsert({
@@ -73,13 +73,14 @@ export async function GET(req: NextRequest) {
       create: { id: "demo-store", tenantId: demoTenant.id, name: "Main Branch", address: "Kariakoo, Dar es Salaam", phone: "+255700000001", isMain: true },
     });
 
+    // Demo Admin — always reset password
     const adminPassword = await bcrypt.hash("Phidtech@@2023", 12);
     await prisma.user.upsert({
       where: { email: "bagokap.8275@gmail.com" },
-      update: { password: adminPassword, isActive: true, tenantId: demoTenant.id, storeId: demoStore.id },
+      update: { password: adminPassword, isActive: true, role: UserRole.TENANT_ADMIN, tenantId: demoTenant.id, storeId: demoStore.id },
       create: { name: "Demo Admin", email: "bagokap.8275@gmail.com", password: adminPassword, role: UserRole.TENANT_ADMIN, tenantId: demoTenant.id, storeId: demoStore.id, isActive: true },
     });
-    results.push("✅ Demo Admin created: bagokap.8275@gmail.com / Phidtech@@2023");
+    results.push("✅ Demo Admin: bagokap.8275@gmail.com / Phidtech@@2023");
 
     // Categories, units, products
     const cat1 = await prisma.category.upsert({ where: { id: "cat-beverages" }, update: {}, create: { id: "cat-beverages", tenantId: demoTenant.id, name: "Beverages" } });

@@ -40,9 +40,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       if (isAuthPage) {
         if (isLoggedIn) {
-          const role = (authSession?.user as any)?.role;
-          if (role === "SUPER_ADMIN")
-            return Response.redirect(new URL("/superadmin", nextUrl));
           return Response.redirect(new URL("/dashboard", nextUrl));
         }
         return true;
@@ -81,7 +78,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!passwordMatch) return null;
 
-        if (user.tenant && user.tenant.status !== "ACTIVE") {
+        if (user.tenant && user.tenant.status === "SUSPENDED") {
           throw new Error("TENANT_SUSPENDED");
         }
 
