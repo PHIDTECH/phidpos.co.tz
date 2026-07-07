@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useLang } from "@/lib/i18n";
 
 interface DashboardData {
   stats: {
@@ -71,6 +72,7 @@ const css = `
 export default function DashboardPage() {
   const sessionResult = useSession();
   const session = sessionResult?.data;
+  const { t, lang } = useLang();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -91,13 +93,13 @@ export default function DashboardPage() {
   useEffect(() => { load(); }, []);
 
   const userName = session?.user?.name || "User";
-  const today = new Date().toLocaleDateString("en-TZ", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  const today = new Date().toLocaleDateString(lang === "sw" ? "sw-TZ" : "en-TZ", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 
   const statCards = [
-    { label: "Leo Mapato", val: fmt(data?.stats.todayRevenue || 0), sub: `${data?.stats.todaySales || 0} miamala`, icon: "💰", bg: "#dbeafe", color: "#2563eb" },
-    { label: "Mapato Mwezi", val: fmt(data?.stats.monthlyRevenue || 0), sub: `${data?.stats.monthlySales || 0} mauzo`, icon: "📈", bg: "#dcfce7", color: "#16a34a" },
-    { label: "Bidhaa Zote", val: String(data?.stats.totalProducts || 0), sub: `${data?.stats.lowStockProducts || 0} kiwango kidogo`, icon: "📦", bg: "#f3e8ff", color: "#7c3aed" },
-    { label: "Wateja", val: String(data?.stats.totalCustomers || 0), sub: `Deni: ${fmt(data?.stats.pendingDebt || 0)}`, icon: "👥", bg: "#ffedd5", color: "#ea580c" },
+    { label: t.todayRevenue, val: fmt(data?.stats.todayRevenue || 0), sub: `${data?.stats.todaySales || 0} ${t.transactions}`, icon: "💰", bg: "#dbeafe", color: "#2563eb" },
+    { label: t.monthlyRevenue, val: fmt(data?.stats.monthlyRevenue || 0), sub: `${data?.stats.monthlySales || 0} ${t.sales}`, icon: "📈", bg: "#dcfce7", color: "#16a34a" },
+    { label: t.totalProducts, val: String(data?.stats.totalProducts || 0), sub: `${data?.stats.lowStockProducts || 0} ${t.lowStock}`, icon: "📦", bg: "#f3e8ff", color: "#7c3aed" },
+    { label: t.totalCustomers, val: String(data?.stats.totalCustomers || 0), sub: `${t.debt}: ${fmt(data?.stats.pendingDebt || 0)}`, icon: "👥", bg: "#ffedd5", color: "#ea580c" },
   ];
 
   // Simple bar chart from weeklyChart
@@ -111,16 +113,15 @@ export default function DashboardPage() {
         {/* Header */}
         <div className="db-header">
           <div>
-            <div className="db-title">Karibu, {userName} 👋</div>
+            <div className="db-title">{t.welcome}, {userName} 👋</div>
             <div className="db-sub">{today}</div>
           </div>
-          <button className="btn-refresh" onClick={load}>↻ Refresh</button>
+          <button className="btn-refresh" onClick={load}>↻ {t.refresh}</button>
         </div>
 
-        {/* Alert */}
         {(data?.stats.lowStockProducts || 0) > 0 && (
           <div className="alert-box">
-            ⚠️ Bidhaa {data!.stats.lowStockProducts} zina hifadhi ndogo. <a href="/inventory" style={{color:"#b45309",fontWeight:700}}>Angalia Hifadhi →</a>
+            ⚠️ {data!.stats.lowStockProducts} {t.lowStock}. <a href="/inventory" style={{color:"#b45309",fontWeight:700}}>{t.inventory} →</a>
           </div>
         )}
 
@@ -152,7 +153,7 @@ export default function DashboardPage() {
             <div className="row2">
               {/* Weekly Chart */}
               <div className="card">
-                <div className="card-title">Mapato - Siku 7 Zilizopita</div>
+                <div className="card-title">{t.weeklyRevenue}</div>
                 {chartData.length > 0 ? (
                   <div className="chart-bars">
                     {chartData.map((d: any, i: number) => (
@@ -163,53 +164,53 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="empty">Hakuna data ya mauzo bado</div>
+                  <div className="empty">{t.noData}</div>
                 )}
               </div>
 
               {/* Top Products */}
               <div className="card">
-                <div className="card-title">Bidhaa Zinazoongoza</div>
+                <div className="card-title">{t.topProducts}</div>
                 {(data?.topProducts || []).length > 0 ? (data?.topProducts || []).map((p: any, i: number) => (
                   <div key={i} className="top-item">
                     <div className="top-num">{i + 1}</div>
                     <div className="top-name">{p.name}</div>
                     <div className="top-rev">{fmt(p.totalRevenue)}</div>
                   </div>
-                )) : <div className="empty">Hakuna mauzo bado</div>}
+                )) : <div className="empty">{t.noData}</div>}
               </div>
             </div>
 
             {/* Recent Sales */}
             <div className="card">
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"14px"}}>
-                <div className="card-title" style={{marginBottom:0}}>Mauzo ya Hivi Karibuni</div>
-                <a href="/reports" style={{fontSize:"13px",color:"#2563eb",fontWeight:600,textDecoration:"none"}}>Angalia Zote →</a>
+                <div className="card-title" style={{marginBottom:0}}>{t.recentSales}</div>
+                <a href="/reports" style={{fontSize:"13px",color:"#2563eb",fontWeight:600,textDecoration:"none"}}>{t.viewAll} →</a>
               </div>
               <div className="table-wrap">
                 <table>
                   <thead>
                     <tr>
-                      <th>Risiti</th>
-                      <th>Mteja</th>
-                      <th>Mkaguzi</th>
-                      <th>Vitu</th>
-                      <th style={{textAlign:"right"}}>Jumla</th>
-                      <th>Tarehe</th>
+                      <th>{t.receipt}</th>
+                      <th>{t.customer}</th>
+                      <th>{t.cashier}</th>
+                      <th>{t.items}</th>
+                      <th style={{textAlign:"right"}}>{t.total}</th>
+                      <th>{t.date}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {(data?.recentSales || []).length > 0 ? (data?.recentSales || []).map((sale: any) => (
                       <tr key={sale.id}>
                         <td className="mono">{sale.receiptNumber}</td>
-                        <td>{sale.customer?.name || <span style={{color:"#9ca3af"}}>Walk-in</span>}</td>
+                        <td>{sale.customer?.name || <span style={{color:"#9ca3af"}}>{t.walkin}</span>}</td>
                         <td>{sale.user?.name}</td>
                         <td>{sale.items?.length || 0}</td>
                         <td className="right">{fmt(sale.total)}</td>
                         <td className="muted">{fmtDate(sale.createdAt)}</td>
                       </tr>
                     )) : (
-                      <tr><td colSpan={6} className="empty">Hakuna mauzo bado</td></tr>
+                      <tr><td colSpan={6} className="empty">{t.noData}</td></tr>
                     )}
                   </tbody>
                 </table>

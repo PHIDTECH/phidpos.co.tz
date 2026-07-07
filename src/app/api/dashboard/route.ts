@@ -5,10 +5,19 @@ import { auth } from "@/lib/auth";
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
-    if (!(session?.user as any)?.tenantId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const role = (session?.user as any)?.role;
     const tenantId = (session?.user as any).tenantId;
     const storeId = (session?.user as any).storeId;
+
+    // SUPER_ADMIN with no tenant — return empty stats
+    if (!tenantId) {
+      return NextResponse.json({
+        stats: { todaySales: 0, todayRevenue: 0, totalProducts: 0, lowStockProducts: 0, totalCustomers: 0, monthlyRevenue: 0, monthlySales: 0, pendingDebt: 0 },
+        recentSales: [], topProducts: [], weeklyChart: [],
+      });
+    }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);

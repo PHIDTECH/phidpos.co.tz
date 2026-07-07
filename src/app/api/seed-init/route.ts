@@ -82,27 +82,28 @@ export async function GET(req: NextRequest) {
     });
     results.push("✅ Demo Admin: bagokap.8275@gmail.com / Phidtech@@2023");
 
-    // Categories, units, products
-    const cat1 = await prisma.category.upsert({ where: { id: "cat-beverages" }, update: {}, create: { id: "cat-beverages", tenantId: demoTenant.id, name: "Beverages" } });
-    const cat2 = await prisma.category.upsert({ where: { id: "cat-food" }, update: {}, create: { id: "cat-food", tenantId: demoTenant.id, name: "Food & Groceries" } });
-    const pieceUnit = await prisma.unit.upsert({ where: { id: "unit-piece" }, update: {}, create: { id: "unit-piece", tenantId: demoTenant.id, name: "Piece", abbreviation: "pc" } });
-    const kgUnit = await prisma.unit.upsert({ where: { id: "unit-kg" }, update: {}, create: { id: "unit-kg", tenantId: demoTenant.id, name: "Kilogram", abbreviation: "kg" } });
+    // Categories & units — only create seed defaults, never touch user-created data
+    const cat1 = await prisma.category.upsert({ where: { id: "cat-beverages" }, update: {}, create: { id: "cat-beverages", tenantId: demoTenant.id, name: "Vinywaji" } });
+    const cat2 = await prisma.category.upsert({ where: { id: "cat-food" }, update: {}, create: { id: "cat-food", tenantId: demoTenant.id, name: "Vyakula" } });
+    const pieceUnit = await prisma.unit.upsert({ where: { id: "unit-piece" }, update: {}, create: { id: "unit-piece", tenantId: demoTenant.id, name: "Kipande", abbreviation: "pc" } });
+    const kgUnit = await prisma.unit.upsert({ where: { id: "unit-kg" }, update: {}, create: { id: "unit-kg", tenantId: demoTenant.id, name: "Kilogramu", abbreviation: "kg" } });
 
-    const products = await Promise.all([
-      prisma.product.upsert({ where: { id: "prod-1" }, update: {}, create: { id: "prod-1", tenantId: demoTenant.id, categoryId: cat1.id, unitId: pieceUnit.id, name: "Coca Cola 500ml", sku: "COKE-500", barcode: "5000112637922", retailPrice: 1500, wholesalePrice: 1200, costPrice: 900, minStockLevel: 20 } }),
-      prisma.product.upsert({ where: { id: "prod-2" }, update: {}, create: { id: "prod-2", tenantId: demoTenant.id, categoryId: cat1.id, unitId: pieceUnit.id, name: "Pepsi 500ml", sku: "PEPSI-500", barcode: "4902102141727", retailPrice: 1500, wholesalePrice: 1200, costPrice: 900, minStockLevel: 20 } }),
-      prisma.product.upsert({ where: { id: "prod-3" }, update: {}, create: { id: "prod-3", tenantId: demoTenant.id, categoryId: cat2.id, unitId: kgUnit.id, name: "Sugar", sku: "SUG-KG", barcode: "1234567890123", retailPrice: 3200, wholesalePrice: 3000, costPrice: 2500, minStockLevel: 50 } }),
-      prisma.product.upsert({ where: { id: "prod-4" }, update: {}, create: { id: "prod-4", tenantId: demoTenant.id, categoryId: cat2.id, unitId: kgUnit.id, name: "Rice (Mchele)", sku: "RICE-KG", barcode: "9876543210987", retailPrice: 2800, wholesalePrice: 2500, costPrice: 2000, minStockLevel: 100 } }),
-    ]);
-
-    for (const product of products) {
-      await prisma.inventory.upsert({
-        where: { productId_storeId: { productId: product.id, storeId: demoStore.id } },
-        update: {},
-        create: { productId: product.id, storeId: demoStore.id, quantity: 100 },
-      });
+    // Only seed demo products if none exist yet for this tenant
+    const existingProducts = await prisma.product.count({ where: { tenantId: demoTenant.id } });
+    if (existingProducts === 0) {
+      const products = await Promise.all([
+        prisma.product.create({ data: { id: "prod-1", tenantId: demoTenant.id, categoryId: cat1.id, unitId: pieceUnit.id, name: "Coca Cola 500ml", sku: "COKE-500", barcode: "5000112637922", retailPrice: 1500, wholesalePrice: 1200, costPrice: 900, minStockLevel: 20 } }),
+        prisma.product.create({ data: { id: "prod-2", tenantId: demoTenant.id, categoryId: cat1.id, unitId: pieceUnit.id, name: "Pepsi 500ml", sku: "PEPSI-500", barcode: "4902102141727", retailPrice: 1500, wholesalePrice: 1200, costPrice: 900, minStockLevel: 20 } }),
+        prisma.product.create({ data: { id: "prod-3", tenantId: demoTenant.id, categoryId: cat2.id, unitId: kgUnit.id, name: "Sukari", sku: "SUG-KG", barcode: "1234567890123", retailPrice: 3200, wholesalePrice: 3000, costPrice: 2500, minStockLevel: 50 } }),
+        prisma.product.create({ data: { id: "prod-4", tenantId: demoTenant.id, categoryId: cat2.id, unitId: kgUnit.id, name: "Mchele", sku: "RICE-KG", barcode: "9876543210987", retailPrice: 2800, wholesalePrice: 2500, costPrice: 2000, minStockLevel: 100 } }),
+      ]);
+      for (const product of products) {
+        await prisma.inventory.create({ data: { productId: product.id, storeId: demoStore.id, quantity: 100 } });
+      }
+      results.push("✅ Demo products and inventory created (first run)");
+    } else {
+      results.push(`ℹ️ Skipped products — ${existingProducts} already exist (data preserved)`);
     }
-    results.push("✅ Products and inventory created");
 
     // Chart of Accounts
     const accounts = [

@@ -1,4 +1,8 @@
+"use client";
+import { useLang } from "@/lib/i18n";
+
 export default function Home() {
+  const { lang, setLang } = useLang();
   return (
     <>
       <style>{`
@@ -143,8 +147,14 @@ export default function Home() {
             <a href="#contact">Contact</a>
           </div>
           <div className="nav-actions">
-            <a href="/login"><button className="btn-signin">Ingia</button></a>
-            <a href="/register"><button className="btn-signup">Jisajili</button></a>
+            <button
+              onClick={() => setLang(lang === "sw" ? "en" : "sw")}
+              style={{padding:"7px 12px",borderRadius:"8px",border:"1px solid #d1d5db",background:"#f9fafb",cursor:"pointer",fontSize:"13px",fontWeight:600,color:"#374151",display:"flex",alignItems:"center",gap:"5px"}}
+            >
+              {lang === "sw" ? "🇹🇿 Kiswahili" : "🇬🇧 English"}
+            </button>
+            <a href="/login"><button className="btn-signin">{lang === "sw" ? "Ingia" : "Sign In"}</button></a>
+            <a href="/register"><button className="btn-signup">{lang === "sw" ? "Jisajili" : "Register"}</button></a>
           </div>
         </div>
       </nav>

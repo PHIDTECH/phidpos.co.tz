@@ -6,18 +6,19 @@ import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useLang, type Lang } from "@/lib/i18n";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashibodi", icon: "📊", roles: ["SUPER_ADMIN","TENANT_ADMIN","STORE_MANAGER","CASHIER","ACCOUNTANT"] },
-  { href: "/pos", label: "Mauzo / POS", icon: "🛒", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"] },
-  { href: "/products", label: "Bidhaa", icon: "📦", roles: ["TENANT_ADMIN","STORE_MANAGER","ACCOUNTANT"] },
-  { href: "/inventory", label: "Hifadhi", icon: "🏪", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
-  { href: "/customers", label: "Wateja", icon: "👥", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"] },
-  { href: "/suppliers", label: "Wasambazaji", icon: "🚚", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
-  { href: "/purchases", label: "Manunuzi", icon: "🛍️", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
-  { href: "/accounting", label: "Uhasibu", icon: "📒", roles: ["TENANT_ADMIN","ACCOUNTANT"] },
-  { href: "/reports", label: "Ripoti", icon: "📈", roles: ["TENANT_ADMIN","STORE_MANAGER","ACCOUNTANT"] },
-  { href: "/settings", label: "Mipangilio", icon: "⚙️", roles: ["TENANT_ADMIN"] },
+  { href: "/dashboard", key: "dashboard", icon: "📊", roles: ["SUPER_ADMIN","TENANT_ADMIN","STORE_MANAGER","CASHIER","ACCOUNTANT"] },
+  { href: "/pos", key: "pos", icon: "🛒", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"] },
+  { href: "/products", key: "products", icon: "📦", roles: ["TENANT_ADMIN","STORE_MANAGER","ACCOUNTANT"] },
+  { href: "/inventory", key: "inventory", icon: "🏪", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
+  { href: "/customers", key: "customers", icon: "👥", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"] },
+  { href: "/suppliers", key: "suppliers", icon: "🚚", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
+  { href: "/purchases", key: "purchases", icon: "🛍️", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
+  { href: "/accounting", key: "accounting", icon: "📒", roles: ["TENANT_ADMIN","ACCOUNTANT"] },
+  { href: "/reports", key: "reports", icon: "📈", roles: ["TENANT_ADMIN","STORE_MANAGER","ACCOUNTANT"] },
+  { href: "/settings", key: "settings", icon: "⚙️", roles: ["TENANT_ADMIN"] },
 ];
 
 const styles = `
@@ -116,18 +117,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const session = sessionData?.data;
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { lang, t, setLang } = useLang();
   const role = (session?.user as any)?.role;
   const filteredNav = navItems.filter((item) => !role || item.roles.includes(role));
   const userName = session?.user?.name || "User";
   const userEmail = session?.user?.email || "";
+  const tenantName = (session?.user as any)?.tenantSlug || "Portal";
   const initial = userName.charAt(0).toUpperCase();
-  const currentLabel = filteredNav.find(n => pathname === n.href || pathname.startsWith(n.href + "/"))?.label || "Dashibodi";
+  const currentKey = filteredNav.find(n => pathname === n.href || pathname.startsWith(n.href + "/"))?.key || "dashboard";
+  const currentLabel = t[currentKey as keyof typeof t] || currentKey;
 
   return (
     <>
       <style>{styles}</style>
       <div className="dash-layout">
-        {/* Mobile Overlay */}
         {sidebarOpen && <div className="mobile-overlay" onClick={() => setSidebarOpen(false)} />}
 
         {/* Sidebar */}
@@ -136,17 +139,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="sidebar-logo-icon">🛒</div>
             <div>
               <div className="sidebar-logo-text">PhidPOS</div>
-              <div className="sidebar-logo-sub">{(session?.user as any)?.tenantSlug || "Portal"}</div>
+              <div className="sidebar-logo-sub">{tenantName}</div>
             </div>
           </div>
 
           <nav className="sidebar-nav">
             {filteredNav.map((item) => {
               const active = pathname === item.href || pathname.startsWith(item.href + "/");
+              const label = t[item.key as keyof typeof t] || item.key;
               return (
                 <Link key={item.href} href={item.href} className={`nav-item${active ? " active" : ""}`} onClick={() => setSidebarOpen(false)}>
                   <span className="nav-item-icon">{item.icon}</span>
-                  {item.label}
+                  {label}
                 </Link>
               );
             })}
@@ -161,7 +165,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
             </div>
             <button className="btn-signout" onClick={() => signOut({ callbackUrl: "/login" })}>
-              🚪 Toka / Sign Out
+              🚪 {t.signOut}
             </button>
           </div>
         </aside>
@@ -172,25 +176,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <header className="topbar">
             <div className="topbar-left">{currentLabel}</div>
             <div className="topbar-right">
+              {/* Language Selector */}
+              <button
+                onClick={() => setLang(lang === "sw" ? "en" : "sw")}
+                style={{display:"flex",alignItems:"center",gap:"6px",padding:"6px 12px",borderRadius:"8px",border:"1px solid #e5e7eb",background:"#f9fafb",cursor:"pointer",fontSize:"13px",fontWeight:600,color:"#374151"}}
+                title={t.language}
+              >
+                <span style={{fontSize:"15px"}}>{lang === "sw" ? "🇹🇿" : "🇬🇧"}</span>
+                <span>{lang === "sw" ? "Kiswahili" : "English"}</span>
+              </button>
               <div className="topbar-bell">🔔</div>
               <div className="topbar-user">
                 <div className="topbar-avatar">{initial}</div>
                 <div>
                   <div className="topbar-name">{userName}</div>
-                  <div className="topbar-role">{role?.replace("_", " ") || "User"}</div>
+                  <div className="topbar-role">{role?.replace(/_/g, " ") || "User"}</div>
                 </div>
                 <span style={{color:"#9ca3af",fontSize:"12px"}}>▼</span>
               </div>
             </div>
           </header>
 
-          {/* Content */}
           <main className="page-content">
             {children}
           </main>
         </div>
 
-        {/* Mobile FAB */}
         <button className="mobile-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>☰</button>
       </div>
     </>
