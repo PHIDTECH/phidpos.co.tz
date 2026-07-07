@@ -94,10 +94,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg text-xs text-gray-600">
-            <p className="font-semibold mb-1">Demo Credentials:</p>
-            <p>Admin: bagokap.8275@gmail.com / Phidtech@@2023</p>
-          </div>
         </div>
         <p className="text-center text-blue-200 text-xs mt-4">
           © {new Date().getFullYear()} PhidPOS by Phidtech ICT & Business Solutions
