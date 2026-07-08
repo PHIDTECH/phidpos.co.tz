@@ -8,8 +8,9 @@ async function checkSA() {
   return session;
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   if (!await checkSA()) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const { id } = await context.params;
   const body = await req.json();
   const data: any = {};
   if (body.name !== undefined) data.name = body.name;
@@ -17,12 +18,13 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (body.phone !== undefined) data.phone = body.phone;
   if (body.planId !== undefined) data.planId = body.planId;
   if (body.status !== undefined) data.status = body.status;
-  const tenant = await prisma.tenant.update({ where: { id: params.id }, data });
+  const tenant = await prisma.tenant.update({ where: { id }, data });
   return NextResponse.json({ tenant });
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
   if (!await checkSA()) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  await prisma.tenant.delete({ where: { id: params.id } });
+  const { id } = await context.params;
+  await prisma.tenant.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 }
