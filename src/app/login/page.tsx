@@ -17,22 +17,45 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
     try {
-      const result = await signIn("credentials", { email, password, redirect: false });
-      if (!result) {
-        setError("Hitilafu ya seva. Jaribu tena.");
-      } else if (result.error) {
-        setError(result.error === "TENANT_SUSPENDED" ? "Akaunti yako imesimamishwa. Wasiliana na msaada." : "Barua pepe au nywila si sahihi.");
-      } else if (!result.ok) {
-        setError("Imeshindwa kuingia. Angalia barua pepe na nywila.");
-      } else {
-        // Use hard redirect to ensure session cookie is picked up
-        const res = await fetch("/api/auth/session");
-        const session = await res.json();
-        const role = (session?.user as any)?.role;
+      // Fetch CSRF token first (required by NextAuth v5)
+      const csrfRes = await fetch("/api/auth/csrf");
+      const { csrfToken } = await csrfRes.json();
+
+      const formData = new URLSearchParams();
+      formData.append("email", email);
+      formData.append("password", password);
+      formData.append("csrfToken", csrfToken);
+      formData.append("callbackUrl", "/dashboard");
+      formData.append("json", "true");
+
+      const res = await fetch("/api/auth/callback/credentials", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: formData.toString(),
+        redirect: "manual",
+      });
+
+      // Check if login succeeded by fetching session
+      const sessionRes = await fetch("/api/auth/session");
+      const session = await sessionRes.json();
+      const role = (session?.user as any)?.role;
+
+      if (role) {
         if (role === "SUPER_ADMIN") {
           window.location.href = "/superadmin";
         } else {
           window.location.href = "/dashboard";
+        }
+      } else {
+        // Try with signIn as fallback
+        const result = await signIn("credentials", { email, password, redirect: false });
+        if (!result || !result.ok) {
+          setError("Barua pepe au nywila si sahihi.");
+        } else {
+          const s2 = await fetch("/api/auth/session");
+          const sess2 = await s2.json();
+          const r2 = (sess2?.user as any)?.role;
+          window.location.href = r2 === "SUPER_ADMIN" ? "/superadmin" : "/dashboard";
         }
       }
     } catch {
