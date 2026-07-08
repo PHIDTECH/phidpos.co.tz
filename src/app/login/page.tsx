@@ -1,11 +1,10 @@
 "use client";
+export const dynamic = "force-dynamic";
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -17,46 +16,31 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
     try {
-      // Fetch CSRF token first (required by NextAuth v5)
-      const csrfRes = await fetch("/api/auth/csrf");
-      const { csrfToken } = await csrfRes.json();
-
-      const formData = new URLSearchParams();
-      formData.append("email", email);
-      formData.append("password", password);
-      formData.append("csrfToken", csrfToken);
-      formData.append("callbackUrl", "/dashboard");
-      formData.append("json", "true");
-
-      const res = await fetch("/api/auth/callback/credentials", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: formData.toString(),
-        redirect: "manual",
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
       });
 
-      // Check if login succeeded by fetching session
+      if (!result) {
+        setError("Hitilafu ya seva. Jaribu tena.");
+        return;
+      }
+
+      if (result.error || !result.ok) {
+        setError("Barua pepe au nywila si sahihi.");
+        return;
+      }
+
+      // Login succeeded - fetch session to get role
       const sessionRes = await fetch("/api/auth/session");
       const session = await sessionRes.json();
       const role = (session?.user as any)?.role;
 
-      if (role) {
-        if (role === "SUPER_ADMIN") {
-          window.location.href = "/superadmin";
-        } else {
-          window.location.href = "/dashboard";
-        }
+      if (role === "SUPER_ADMIN") {
+        window.location.replace("/superadmin");
       } else {
-        // Try with signIn as fallback
-        const result = await signIn("credentials", { email, password, redirect: false });
-        if (!result || !result.ok) {
-          setError("Barua pepe au nywila si sahihi.");
-        } else {
-          const s2 = await fetch("/api/auth/session");
-          const sess2 = await s2.json();
-          const r2 = (sess2?.user as any)?.role;
-          window.location.href = r2 === "SUPER_ADMIN" ? "/superadmin" : "/dashboard";
-        }
+        window.location.replace("/dashboard");
       }
     } catch {
       setError("Hitilafu imetokea. Jaribu tena.");
@@ -208,8 +192,12 @@ export default function LoginPage() {
                   placeholder="Ingiza nywila yako"
                   style={{paddingRight: '44px'}}
                 />
-                <button type="button" className="pw-toggle" onClick={() => setShowPassword(!showPassword)}>
-                  {showPassword ? "🙈" : "👁"}
+                <button type="button" className="pw-toggle" onClick={(e) => { e.preventDefault(); setShowPassword(!showPassword); }}>
+                  {showPassword ? (
+                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  ) : (
+                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  )}
                 </button>
               </div>
             </div>
@@ -222,7 +210,7 @@ export default function LoginPage() {
               <label>
                 <input type="checkbox" /> Nikumbuke
               </label>
-              <a href="#">Umesahau nywila?</a>
+              <a href="/forgot-password">Umesahau nywila?</a>
             </div>
           </form>
 
@@ -230,7 +218,7 @@ export default function LoginPage() {
             Huna akaunti? <a href="/register">Sajili shirika lako</a>
           </div>
           <div className="terms-row">
-            <a href="#">Masharti na Vigezo</a>
+            <a href="/terms">Masharti na Vigezo</a>
           </div>
         </div>
       </div>
