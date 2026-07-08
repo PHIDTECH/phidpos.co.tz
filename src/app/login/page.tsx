@@ -25,16 +25,15 @@ export default function LoginPage() {
       } else if (!result.ok) {
         setError("Imeshindwa kuingia. Angalia barua pepe na nywila.");
       } else {
-        // Fetch session to determine role for redirect
-        const { getSession } = await import("next-auth/react");
-        const session = await getSession();
+        // Use hard redirect to ensure session cookie is picked up
+        const res = await fetch("/api/auth/session");
+        const session = await res.json();
         const role = (session?.user as any)?.role;
         if (role === "SUPER_ADMIN") {
-          router.push("/superadmin");
+          window.location.href = "/superadmin";
         } else {
-          router.push("/dashboard");
+          window.location.href = "/dashboard";
         }
-        router.refresh();
       }
     } catch {
       setError("Hitilafu imetokea. Jaribu tena.");
