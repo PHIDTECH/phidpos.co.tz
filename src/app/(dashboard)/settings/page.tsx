@@ -3,7 +3,6 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";
-import { Settings, Store, Users, Bell, Save, Loader2, Plus, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 
@@ -60,206 +59,208 @@ export default function SettingsPage() {
     setSavingUser(false);
   }
 
-  const roleColors: Record<string, string> = {
-    TENANT_ADMIN: "bg-red-100 text-red-700",
-    STORE_MANAGER: "bg-blue-100 text-blue-700",
-    CASHIER: "bg-green-100 text-green-700",
-    ACCOUNTANT: "bg-purple-100 text-purple-700",
+  const roleColorMap: Record<string,[string,string]> = {
+    TENANT_ADMIN:  ["#fef2f2","#b91c1c"],
+    STORE_MANAGER: ["#eff6ff","#1d4ed8"],
+    CASHIER:       ["#f0fdf4","#15803d"],
+    ACCOUNTANT:    ["#f5f3ff","#6d28d9"],
+  };
+
+  const tabMeta = [
+    {key:"general",    icon:"⚙️",  label:"Jumla"},
+    {key:"store",      icon:"🏪",  label:"Duka"},
+    {key:"users",      icon:"👥",  label:"Watumiaji"},
+    {key:"notifications", icon:"🔔", label:"Arifa"},
+  ];
+
+  const S: Record<string,React.CSSProperties> = {
+    page:    {padding:24,fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"},
+    hdr:     {marginBottom:20},
+    h1:      {fontSize:22,fontWeight:800,color:"#111",margin:0},
+    sub:     {fontSize:13,color:"#6b7280",marginTop:4},
+    tabBar:  {display:"flex",gap:4,background:"#f3f4f6",padding:4,borderRadius:12,marginBottom:20,flexWrap:"wrap" as const},
+    card:    {background:"#fff",border:"1px solid #e5e7eb",borderRadius:14,padding:24,maxWidth:640,marginBottom:20,boxShadow:"0 1px 4px rgba(0,0,0,0.04)"},
+    grid2:   {display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14},
+    lbl:     {fontSize:13,fontWeight:700,color:"#374151",display:"block",marginBottom:5},
+    inp:     {width:"100%",padding:"9px 12px",border:"1px solid #e5e7eb",borderRadius:10,fontSize:13,outline:"none",boxSizing:"border-box" as const},
+    sel:     {width:"100%",padding:"9px 12px",border:"1px solid #e5e7eb",borderRadius:10,fontSize:13,outline:"none",background:"#fff",boxSizing:"border-box" as const},
+    saveBtn: {padding:"10px 24px",background:"#2563eb",color:"#fff",border:"none",borderRadius:10,fontSize:14,fontWeight:700,cursor:"pointer"},
+    tblCard: {background:"#fff",border:"1px solid #e5e7eb",borderRadius:14,overflow:"hidden",marginBottom:16,boxShadow:"0 1px 4px rgba(0,0,0,0.04)"},
+    th:      {padding:"11px 14px",fontSize:12,fontWeight:700,color:"#6b7280",textAlign:"left" as const,borderBottom:"1px solid #e5e7eb",background:"#f9fafb"},
+    td:      {padding:"12px 14px",fontSize:13,color:"#374151",borderBottom:"1px solid #f3f4f6",verticalAlign:"middle" as const},
+    addBtn:  {padding:"9px 18px",background:"#2563eb",color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer"},
+    overlay: {position:"fixed" as const,inset:0,background:"rgba(0,0,0,0.55)",zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",padding:16},
+    modal:   {background:"#fff",borderRadius:18,width:"100%",maxWidth:440,boxShadow:"0 20px 60px rgba(0,0,0,0.2)"},
+    mhdr:    {display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 20px",borderBottom:"1px solid #e5e7eb"},
+    mbody:   {padding:20},
+    mftr:    {display:"flex",gap:10,padding:"14px 20px",borderTop:"1px solid #e5e7eb"},
+    cancelB: {flex:1,padding:"10px 0",borderRadius:12,border:"1px solid #e5e7eb",background:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",color:"#374151"},
+    saveB:   {flex:1,padding:"10px 0",borderRadius:12,border:"none",background:"#2563eb",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"},
+    avatar:  {width:32,height:32,borderRadius:"50%",background:"#2563eb",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:12,fontWeight:800,flexShrink:0},
+  };
+  const dynS = {
+    tab:(a:boolean):React.CSSProperties=>({padding:"8px 16px",borderRadius:9,fontSize:13,fontWeight:700,border:"none",cursor:"pointer",background:a?"#fff":"transparent",color:a?"#2563eb":"#6b7280",boxShadow:a?"0 1px 4px rgba(0,0,0,0.08)":"none"}),
   };
 
   return (
-    <div className="p-6 space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-muted-foreground text-sm">Manage your business settings</p>
+    <div style={S.page}>
+      <div style={S.hdr}>
+        <h1 style={S.h1}>⚙️ Mipangilio</h1>
+        <p style={S.sub}>Simamia mipangilio ya biashara yako</p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-muted p-1 rounded-xl w-fit">
-        {TABS.map(t => (
-          <button key={t} onClick={() => setTab(t)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${tab === t ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-            {t}
+      <div style={S.tabBar}>
+        {tabMeta.map(t=>(
+          <button key={t.key} onClick={()=>setTab(t.key as any)} style={dynS.tab(tab===t.key)}>
+            {t.icon} {t.label}
           </button>
         ))}
       </div>
 
-      {/* General Settings */}
-      {tab === "general" && (
-        <div className="bg-card border rounded-xl p-6 space-y-4 max-w-2xl">
-          <h2 className="font-semibold text-lg">General Settings</h2>
-          <div className="grid grid-cols-2 gap-4">
+      {tab==="general" && (
+        <div style={S.card}>
+          <div style={{fontSize:15,fontWeight:800,marginBottom:16,color:"#111"}}>⚙️ Mipangilio ya Jumla</div>
+          <div style={S.grid2}>
             {[
-              { label: "Business Name", key: "businessName", type: "text", placeholder: "My Shop" },
-              { label: "Phone", key: "phone", type: "tel", placeholder: "+255700000000" },
-              { label: "Email", key: "email", type: "email", placeholder: "info@myshop.com" },
-              { label: "Tax Rate (%)", key: "taxRate", type: "number", placeholder: "18" },
-            ].map(f => (
+              {label:"Jina la Biashara", key:"businessName", type:"text",   ph:"Duka Langu"},
+              {label:"Simu",             key:"phone",        type:"tel",    ph:"+255700000000"},
+              {label:"Barua Pepe",       key:"email",        type:"email",  ph:"info@duka.com"},
+              {label:"Kiwango cha Kodi (%)", key:"taxRate",  type:"number", ph:"18"},
+            ].map(f=>(
               <div key={f.key}>
-                <label className="text-sm font-medium">{f.label}</label>
-                <input type={f.type} value={(general as any)[f.key]}
-                  onChange={e => setGeneral(prev => ({ ...prev, [f.key]: e.target.value }))}
-                  placeholder={f.placeholder}
-                  className="mt-1 w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                <label style={S.lbl}>{f.label}</label>
+                <input type={f.type} value={(general as any)[f.key]} onChange={e=>setGeneral(p=>({...p,[f.key]:e.target.value}))} placeholder={f.ph} style={S.inp}/>
               </div>
             ))}
             <div>
-              <label className="text-sm font-medium">Currency</label>
-              <select value={general.currency} onChange={e => setGeneral(prev => ({ ...prev, currency: e.target.value }))}
-                className="mt-1 w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                <option value="TZS">TZS - Tanzanian Shilling</option>
-                <option value="USD">USD - US Dollar</option>
-                <option value="KES">KES - Kenyan Shilling</option>
-                <option value="UGX">UGX - Ugandan Shilling</option>
+              <label style={S.lbl}>Sarafu</label>
+              <select value={general.currency} onChange={e=>setGeneral(p=>({...p,currency:e.target.value}))} style={S.sel}>
+                <option value="TZS">TZS - Shilingi ya Tanzania</option>
+                <option value="USD">USD - Dola ya Marekani</option>
+                <option value="KES">KES - Shilingi ya Kenya</option>
+                <option value="UGX">UGX - Shilingi ya Uganda</option>
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium">Timezone</label>
-              <select value={general.timezone} onChange={e => setGeneral(prev => ({ ...prev, timezone: e.target.value }))}
-                className="mt-1 w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+              <label style={S.lbl}>Eneo la Saa</label>
+              <select value={general.timezone} onChange={e=>setGeneral(p=>({...p,timezone:e.target.value}))} style={S.sel}>
                 <option value="Africa/Dar_es_Salaam">Africa/Dar es Salaam (UTC+3)</option>
                 <option value="Africa/Nairobi">Africa/Nairobi (UTC+3)</option>
                 <option value="Africa/Kampala">Africa/Kampala (UTC+3)</option>
               </select>
             </div>
-            <div className="col-span-2">
-              <label className="text-sm font-medium">Business Address</label>
-              <textarea value={general.address} onChange={e => setGeneral(prev => ({ ...prev, address: e.target.value }))}
-                rows={2} placeholder="Physical address"
-                className="mt-1 w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none" />
-            </div>
           </div>
-          <button onClick={saveGeneral} disabled={saving} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium">
-            {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-            {saving ? "Saving…" : "Save Settings"}
-          </button>
+          <div style={{marginBottom:14}}>
+            <label style={S.lbl}>Anwani ya Biashara</label>
+            <textarea value={general.address} onChange={e=>setGeneral(p=>({...p,address:e.target.value}))} rows={2} placeholder="Anwani ya kimwili" style={{...S.inp,resize:"none" as const,height:64}}/>
+          </div>
+          <button onClick={saveGeneral} disabled={saving} style={S.saveBtn}>{saving?"Inahifadhi…":"Hifadhi Mipangilio"}</button>
         </div>
       )}
 
-      {/* Users */}
-      {tab === "users" && (
-        <div className="space-y-4 max-w-3xl">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-lg">Team Members</h2>
-            <button onClick={() => setShowUserModal(true)} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-              <Plus className="w-4 h-4" /> Add User
-            </button>
+      {tab==="users" && (
+        <div style={{maxWidth:780}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+            <div style={{fontSize:15,fontWeight:800,color:"#111"}}>👥 Wanachama wa Timu</div>
+            <button onClick={()=>setShowUserModal(true)} style={S.addBtn}>＋ Ongeza Mtumiaji</button>
           </div>
-          <div className="bg-card border rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 border-b">
-                <tr>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Name</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Email</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Role</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Store</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
-                </tr>
-              </thead>
+          <div style={S.tblCard}>
+            <table style={{width:"100%",borderCollapse:"collapse"}}>
+              <thead><tr>
+                <th style={S.th}>Jina</th>
+                <th style={S.th}>Barua Pepe</th>
+                <th style={S.th}>Jukumu</th>
+                <th style={S.th}>Duka</th>
+                <th style={S.th}>Hali</th>
+              </tr></thead>
               <tbody>
-                {users.map((u: any) => (
-                  <tr key={u.id} className="border-b hover:bg-muted/30">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                          {u.name?.charAt(0).toUpperCase()}
+                {users.map((u:any)=>{
+                  const [rbg,rclr]=roleColorMap[u.role]||["#f3f4f6","#374151"];
+                  return(
+                    <tr key={u.id}>
+                      <td style={S.td}>
+                        <div style={{display:"flex",alignItems:"center",gap:10}}>
+                          <div style={S.avatar}>{u.name?.charAt(0).toUpperCase()}</div>
+                          <span style={{fontWeight:700}}>{u.name}</span>
                         </div>
-                        <span className="font-medium">{u.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${roleColors[u.role] || "bg-gray-100 text-gray-700"}`}>{u.role}</span>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">{u.store?.name || "—"}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${u.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                        {u.isActive ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-                {users.length === 0 && (
-                  <tr><td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">No users found</td></tr>
-                )}
+                      </td>
+                      <td style={{...S.td,color:"#6b7280"}}>{u.email}</td>
+                      <td style={S.td}><span style={{display:"inline-block",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700,background:rbg,color:rclr}}>{u.role.replace(/_/g," ")}</span></td>
+                      <td style={{...S.td,color:"#6b7280"}}>{u.store?.name||"—"}</td>
+                      <td style={S.td}><span style={{display:"inline-block",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700,background:u.isActive?"#f0fdf4":"#fef2f2",color:u.isActive?"#16a34a":"#dc2626"}}>{u.isActive?"Hai":"Imezimwa"}</span></td>
+                    </tr>
+                  );
+                })}
+                {users.length===0&&<tr><td colSpan={5} style={{...S.td,textAlign:"center",padding:"32px 0",color:"#9ca3af"}}>Hakuna watumiaji</td></tr>}
               </tbody>
             </table>
           </div>
         </div>
       )}
 
-      {/* Notifications */}
-      {tab === "notifications" && (
-        <div className="bg-card border rounded-xl p-6 max-w-2xl space-y-4">
-          <h2 className="font-semibold text-lg">SMS Notifications</h2>
-          <p className="text-sm text-muted-foreground">Configure when to send SMS alerts to customers and staff.</p>
+      {tab==="notifications" && (
+        <div style={S.card}>
+          <div style={{fontSize:15,fontWeight:800,marginBottom:4,color:"#111"}}>🔔 Arifa za SMS</div>
+          <p style={{fontSize:13,color:"#6b7280",marginBottom:16}}>Sanidi wakati wa kutuma arifa za SMS kwa wateja na wafanyakazi.</p>
           {[
-            { label: "Low stock alerts", desc: "Notify manager when product stock falls below minimum level" },
-            { label: "Debt reminders", desc: "Send reminder to customers with outstanding debt" },
-            { label: "Sales receipt", desc: "Send receipt SMS to customers after purchase" },
-            { label: "Payment confirmation", desc: "Notify customer when debt payment is recorded" },
-          ].map((item, i) => (
-            <div key={i} className="flex items-start justify-between py-3 border-b last:border-0">
+            {label:"Onyo la hifadhi chini",   desc:"Arifu meneja wakati hifadhi ya bidhaa inapungua chini ya kiwango cha chini"},
+            {label:"Ukumbusho wa deni",        desc:"Tuma ukumbusho kwa wateja wenye deni"},
+            {label:"Risiti ya mauzo",          desc:"Tuma SMS ya risiti kwa wateja baada ya ununuzi"},
+            {label:"Uthibitisho wa malipo",    desc:"Arifu mteja wakati malipo ya deni yamerekodiwa"},
+          ].map((item,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",padding:"14px 0",borderBottom:i<3?"1px solid #f3f4f6":"none"}}>
               <div>
-                <p className="text-sm font-medium">{item.label}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
+                <div style={{fontSize:13,fontWeight:700,color:"#111"}}>{item.label}</div>
+                <div style={{fontSize:12,color:"#6b7280",marginTop:3}}>{item.desc}</div>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer ml-4 flex-shrink-0">
-                <input type="checkbox" className="sr-only peer" defaultChecked />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <label style={{position:"relative" as const,display:"inline-flex",alignItems:"center",cursor:"pointer",marginLeft:16,flexShrink:0}}>
+                <input type="checkbox" style={{display:"none"}} defaultChecked/>
+                <div style={{width:44,height:24,background:"#2563eb",borderRadius:12,position:"relative" as const}}>
+                  <div style={{position:"absolute" as const,top:2,right:2,width:20,height:20,background:"#fff",borderRadius:"50%",boxShadow:"0 1px 3px rgba(0,0,0,0.2)"}}/>
+                </div>
               </label>
             </div>
           ))}
         </div>
       )}
 
-      {tab === "store" && (
-        <div className="bg-card border rounded-xl p-6 max-w-2xl">
-          <h2 className="font-semibold text-lg mb-4">Store Information</h2>
-          <p className="text-sm text-muted-foreground">Store: <span className="font-medium text-foreground">{session?.user?.name}</span></p>
-          <p className="text-xs text-muted-foreground mt-2">Contact your Tenant Admin to add or manage multiple stores.</p>
+      {tab==="store" && (
+        <div style={S.card}>
+          <div style={{fontSize:15,fontWeight:800,marginBottom:12,color:"#111"}}>🏪 Taarifa za Duka</div>
+          <p style={{fontSize:13,color:"#6b7280"}}>Duka: <strong style={{color:"#111"}}>{session?.user?.name}</strong></p>
+          <p style={{fontSize:12,color:"#9ca3af",marginTop:8}}>Wasiliana na Msimamizi wa Tenant kuongeza au kusimamia maduka mengi.</p>
         </div>
       )}
 
-      {/* Add User Modal */}
       {showUserModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
-            <div className="flex items-center justify-between p-5 border-b">
-              <h3 className="text-lg font-bold">Add Team Member</h3>
-              <button onClick={() => setShowUserModal(false)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+        <div style={S.overlay}>
+          <div style={S.modal}>
+            <div style={S.mhdr}>
+              <span style={{fontSize:15,fontWeight:800,color:"#111"}}>➕ Ongeza Mwanachama</span>
+              <button onClick={()=>setShowUserModal(false)} style={{background:"none",border:"none",fontSize:22,cursor:"pointer",color:"#9ca3af",lineHeight:1}}>×</button>
             </div>
-            <div className="p-5 space-y-4">
+            <div style={S.mbody}>
               {[
-                { label: "Full Name *", key: "name", type: "text", placeholder: "John Doe" },
-                { label: "Email *", key: "email", type: "email", placeholder: "john@yourshop.com" },
-                { label: "Password *", key: "password", type: "password", placeholder: "••••••••" },
-              ].map(f => (
-                <div key={f.key}>
-                  <label className="text-sm font-medium">{f.label}</label>
-                  <input type={f.type} value={(userForm as any)[f.key]}
-                    onChange={e => setUserForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                    placeholder={f.placeholder}
-                    className="mt-1 w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                {label:"Jina Kamili *",  key:"name",     type:"text",     ph:"John Doe"},
+                {label:"Barua Pepe *",   key:"email",    type:"email",    ph:"john@duka.com"},
+                {label:"Nywila *",       key:"password", type:"password", ph:"••••••••"},
+              ].map(f=>(
+                <div key={f.key} style={{marginBottom:12}}>
+                  <label style={S.lbl}>{f.label}</label>
+                  <input type={f.type} value={(userForm as any)[f.key]} onChange={e=>setUserForm(p=>({...p,[f.key]:e.target.value}))} placeholder={f.ph} style={S.inp}/>
                 </div>
               ))}
-              <div>
-                <label className="text-sm font-medium">Role *</label>
-                <select value={userForm.role} onChange={e => setUserForm(prev => ({ ...prev, role: e.target.value }))}
-                  className="mt-1 w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                  <option value="CASHIER">Cashier</option>
-                  <option value="STORE_MANAGER">Store Manager</option>
-                  <option value="ACCOUNTANT">Accountant</option>
-                  <option value="TENANT_ADMIN">Tenant Admin</option>
-                </select>
-              </div>
+              <label style={S.lbl}>Jukumu *</label>
+              <select value={userForm.role} onChange={e=>setUserForm(p=>({...p,role:e.target.value}))} style={S.sel}>
+                <option value="CASHIER">Cashier</option>
+                <option value="STORE_MANAGER">Meneja wa Duka</option>
+                <option value="ACCOUNTANT">Mhasibu</option>
+                <option value="TENANT_ADMIN">Msimamizi wa Tenant</option>
+              </select>
             </div>
-            <div className="p-5 border-t flex gap-3">
-              <button onClick={() => setShowUserModal(false)} className="flex-1 py-2.5 border rounded-xl font-medium hover:bg-gray-50">Cancel</button>
-              <button onClick={createUser} disabled={savingUser} className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium flex items-center justify-center gap-2">
-                {savingUser && <Loader2 className="w-4 h-4 animate-spin" />}
-                {savingUser ? "Creating…" : "Create User"}
-              </button>
+            <div style={S.mftr}>
+              <button onClick={()=>setShowUserModal(false)} style={S.cancelB}>Ghairi</button>
+              <button onClick={createUser} disabled={savingUser} style={S.saveB}>{savingUser?"Inaunda…":"Unda Mtumiaji"}</button>
             </div>
           </div>
         </div>

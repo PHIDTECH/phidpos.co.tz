@@ -3,7 +3,6 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";
-import { Plus, Search, ShoppingBag, X, Loader2, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -92,52 +91,72 @@ export default function PurchasesPage() {
     setSaving(false);
   }
 
+  const S: Record<string, React.CSSProperties> = {
+    page:   { padding:24, fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" },
+    hdr:    { display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 },
+    h1:     { fontSize:22, fontWeight:800, color:"#111", margin:0 },
+    sub:    { fontSize:13, color:"#6b7280", marginTop:4 },
+    addBtn: { display:"flex", alignItems:"center", gap:6, padding:"9px 18px", background:"#2563eb", color:"#fff", border:"none", borderRadius:10, fontSize:13, fontWeight:700, cursor:"pointer" },
+    card:   { background:"#fff", border:"1px solid #e5e7eb", borderRadius:14, overflow:"hidden", boxShadow:"0 1px 4px rgba(0,0,0,0.04)", marginBottom:20 },
+    th:     { padding:"11px 14px", fontSize:12, fontWeight:700, color:"#6b7280", textAlign:"left" as const, borderBottom:"1px solid #e5e7eb", background:"#f9fafb", whiteSpace:"nowrap" as const },
+    thr:    { padding:"11px 14px", fontSize:12, fontWeight:700, color:"#6b7280", textAlign:"right" as const, borderBottom:"1px solid #e5e7eb", background:"#f9fafb", whiteSpace:"nowrap" as const },
+    td:     { padding:"12px 14px", fontSize:13, color:"#374151", borderBottom:"1px solid #f3f4f6", verticalAlign:"middle" as const },
+    tdr:    { padding:"12px 14px", fontSize:13, color:"#374151", borderBottom:"1px solid #f3f4f6", textAlign:"right" as const, verticalAlign:"middle" as const },
+    overlay:{ position:"fixed" as const, inset:0, background:"rgba(0,0,0,0.55)", zIndex:50, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
+    modal:  { background:"#fff", borderRadius:18, width:"100%", maxWidth:680, boxShadow:"0 20px 60px rgba(0,0,0,0.2)", display:"flex", flexDirection:"column" as const, maxHeight:"90vh" },
+    mhdr:   { display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 20px", borderBottom:"1px solid #e5e7eb", flexShrink:0 },
+    mbody:  { padding:20, overflowY:"auto" as const, flex:1 },
+    mftr:   { display:"flex", gap:10, padding:"14px 20px", borderTop:"1px solid #e5e7eb", flexShrink:0 },
+    lbl:    { fontSize:13, fontWeight:700, color:"#374151", display:"block", marginBottom:5 },
+    inp:    { width:"100%", padding:"9px 12px", border:"1px solid #e5e7eb", borderRadius:10, fontSize:13, outline:"none", boxSizing:"border-box" as const },
+    sel:    { width:"100%", padding:"9px 12px", border:"1px solid #e5e7eb", borderRadius:10, fontSize:13, outline:"none", background:"#fff", boxSizing:"border-box" as const },
+    grid2:  { display:"grid", gridTemplateColumns:"1fr 1fr", gap:14, marginBottom:14 },
+    cancelB:{ flex:1, padding:"10px 0", borderRadius:12, border:"1px solid #e5e7eb", background:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", color:"#374151" },
+    saveB:  { flex:1, padding:"10px 0", borderRadius:12, border:"none", background:"#2563eb", color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer" },
+  };
+
   return (
-    <div className="p-6 space-y-5">
-      <div className="flex items-center justify-between">
+    <div style={S.page}>
+      <div style={S.hdr}>
         <div>
-          <h1 className="text-2xl font-bold">Purchases</h1>
-          <p className="text-muted-foreground text-sm">{purchases.length} recent purchases</p>
+          <h1 style={S.h1}>🛍 Manunuzi</h1>
+          <p style={S.sub}>{purchases.length} manunuzi ya hivi karibuni</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-          <Plus className="w-4 h-4" /> New Purchase
-        </button>
+        <button onClick={() => setShowModal(true)} style={S.addBtn}>＋ Manunuzi Mapya</button>
       </div>
 
-      <div className="bg-card border rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 border-b">
+      <div style={S.card}>
+        <div style={{overflowX:"auto"}}>
+          <table style={{width:"100%", borderCollapse:"collapse"}}>
+            <thead>
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Invoice</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Supplier</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Store</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Total</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Paid</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Balance</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Date</th>
+                <th style={S.th}>Ankara</th>
+                <th style={S.th}>Msambazaji</th>
+                <th style={S.th}>Duka</th>
+                <th style={S.thr}>Jumla</th>
+                <th style={S.thr}>Kilicholipwa</th>
+                <th style={S.thr}>Salio</th>
+                <th style={S.th}>Tarehe</th>
               </tr>
             </thead>
             <tbody>
-              {loading ? Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i} className="border-b">
-                  {Array.from({ length: 7 }).map((_, j) => (
-                    <td key={j} className="px-4 py-3"><div className="h-4 bg-muted animate-pulse rounded" /></td>
-                  ))}
-                </tr>
+              {loading ? Array.from({length:5}).map((_,i)=>(
+                <tr key={i}>{Array.from({length:7}).map((_,j)=>(
+                  <td key={j} style={S.td}><div style={{height:14,background:"#f3f4f6",borderRadius:6}}/></td>
+                ))}</tr>
               )) : purchases.map(p => (
-                <tr key={p.id} className="border-b hover:bg-muted/30">
-                  <td className="px-4 py-3 font-mono text-xs">{p.invoiceNumber || p.id.slice(0, 8)}</td>
-                  <td className="px-4 py-3">{p.supplier?.name}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{p.store?.name}</td>
-                  <td className="px-4 py-3 text-right font-semibold">{formatCurrency(p.total, "TZS")}</td>
-                  <td className="px-4 py-3 text-right text-green-600">{formatCurrency(p.amountPaid, "TZS")}</td>
-                  <td className="px-4 py-3 text-right text-red-600">{formatCurrency(Number(p.total) - Number(p.amountPaid), "TZS")}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{formatDate(p.createdAt)}</td>
+                <tr key={p.id}>
+                  <td style={{...S.td, fontFamily:"monospace", fontSize:11, color:"#6b7280"}}>{p.invoiceNumber || p.id.slice(0,8).toUpperCase()}</td>
+                  <td style={{...S.td, fontWeight:700}}>{p.supplier?.name}</td>
+                  <td style={{...S.td, color:"#6b7280"}}>{p.store?.name}</td>
+                  <td style={{...S.tdr, fontWeight:700, color:"#2563eb"}}>{formatCurrency(p.total,"TZS")}</td>
+                  <td style={{...S.tdr, color:"#16a34a", fontWeight:700}}>{formatCurrency(p.amountPaid,"TZS")}</td>
+                  <td style={{...S.tdr, color:Number(p.total)-Number(p.amountPaid)>0?"#dc2626":"#16a34a", fontWeight:700}}>{formatCurrency(Number(p.total)-Number(p.amountPaid),"TZS")}</td>
+                  <td style={{...S.td, fontSize:12, color:"#9ca3af"}}>{formatDate(p.createdAt)}</td>
                 </tr>
               ))}
-              {!loading && purchases.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">No purchases recorded</td></tr>
+              {!loading && purchases.length===0 && (
+                <tr><td colSpan={7} style={{...S.td, textAlign:"center", padding:"40px 0", color:"#9ca3af"}}>Hakuna manunuzi yaliyorekodiwa</td></tr>
               )}
             </tbody>
           </table>
@@ -145,94 +164,65 @@ export default function PurchasesPage() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-3xl shadow-2xl max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between p-5 border-b">
-              <h3 className="text-lg font-bold">Record Purchase</h3>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+        <div style={S.overlay}>
+          <div style={S.modal}>
+            <div style={S.mhdr}>
+              <span style={{fontSize:15,fontWeight:800,color:"#111"}}>🛍 Rekodi Manunuzi</span>
+              <button onClick={()=>setShowModal(false)} style={{background:"none",border:"none",fontSize:22,cursor:"pointer",color:"#9ca3af",lineHeight:1}}>×</button>
             </div>
-            <div className="flex-1 overflow-y-auto p-5 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div style={S.mbody}>
+              <div style={S.grid2}>
                 <div>
-                  <label className="text-sm font-medium">Supplier *</label>
-                  <select value={form.supplierId} onChange={e => setForm(f => ({ ...f, supplierId: e.target.value }))}
-                    className="mt-1 w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                    <option value="">Select supplier</option>
-                    {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  <label style={S.lbl}>Msambazaji *</label>
+                  <select value={form.supplierId} onChange={e=>setForm(f=>({...f,supplierId:e.target.value}))} style={S.sel}>
+                    <option value="">Chagua msambazaji</option>
+                    {suppliers.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Invoice Number</label>
-                  <input value={form.invoiceNumber} onChange={e => setForm(f => ({ ...f, invoiceNumber: e.target.value }))}
-                    placeholder="INV-001" className="mt-1 w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                  <label style={S.lbl}>Nambari ya Ankara</label>
+                  <input value={form.invoiceNumber} onChange={e=>setForm(f=>({...f,invoiceNumber:e.target.value}))} placeholder="INV-001" style={S.inp}/>
                 </div>
               </div>
 
-              {/* Items */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium">Items</label>
-                  <button onClick={addItem} className="text-xs text-blue-600 hover:underline flex items-center gap-1">
-                    <Plus className="w-3.5 h-3.5" /> Add Item
-                  </button>
+              <div style={{marginBottom:14}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                  <span style={{fontSize:13,fontWeight:700,color:"#374151"}}>Bidhaa</span>
+                  <button onClick={addItem} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#2563eb",fontWeight:700}}>＋ Ongeza Bidhaa</button>
                 </div>
-                <div className="space-y-2">
-                  {items.map((item, idx) => (
-                    <div key={idx} className="grid grid-cols-12 gap-2 items-center">
-                      <div className="col-span-5">
-                        <select value={item.productId} onChange={e => updateItem(idx, "productId", e.target.value)}
-                          className="w-full px-2 py-1.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                          <option value="">Select product</option>
-                          {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                        </select>
-                      </div>
-                      <div className="col-span-2">
-                        <input type="number" value={item.quantity} onChange={e => updateItem(idx, "quantity", e.target.value)}
-                          placeholder="Qty" className="w-full px-2 py-1.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
-                      </div>
-                      <div className="col-span-3">
-                        <input type="number" value={item.unitCost} onChange={e => updateItem(idx, "unitCost", e.target.value)}
-                          placeholder="Unit Cost" className="w-full px-2 py-1.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
-                      </div>
-                      <div className="col-span-1 text-right text-sm font-semibold text-blue-600">
-                        {formatCurrency(item.total, "TZS")}
-                      </div>
-                      <div className="col-span-1 flex justify-end">
-                        {items.length > 1 && (
-                          <button onClick={() => removeItem(idx)} className="text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                {items.map((item,idx)=>(
+                  <div key={idx} style={{display:"grid",gridTemplateColumns:"1fr 80px 110px 90px 32px",gap:8,marginBottom:8,alignItems:"center"}}>
+                    <select value={item.productId} onChange={e=>updateItem(idx,"productId",e.target.value)} style={S.sel}>
+                      <option value="">Chagua bidhaa</option>
+                      {products.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                    <input type="number" value={item.quantity} onChange={e=>updateItem(idx,"quantity",e.target.value)} placeholder="Idadi" style={S.inp}/>
+                    <input type="number" value={item.unitCost} onChange={e=>updateItem(idx,"unitCost",e.target.value)} placeholder="Gharama" style={S.inp}/>
+                    <div style={{textAlign:"right",fontWeight:700,color:"#2563eb",fontSize:13}}>{formatCurrency(item.total,"TZS")}</div>
+                    {items.length>1 && <button onClick={()=>removeItem(idx)} style={{background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#dc2626"}}>×</button>}
+                  </div>
+                ))}
               </div>
 
-              <div className="flex justify-end pt-2 border-t">
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Grand Total</p>
-                  <p className="text-2xl font-bold text-blue-600">{formatCurrency(grandTotal, "TZS")}</p>
-                </div>
+              <div style={{borderTop:"1px solid #e5e7eb",paddingTop:12,marginBottom:14,textAlign:"right"}}>
+                <div style={{fontSize:12,color:"#6b7280"}}>Jumla Kuu</div>
+                <div style={{fontSize:24,fontWeight:900,color:"#2563eb"}}>{formatCurrency(grandTotal,"TZS")}</div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div style={S.grid2}>
                 <div>
-                  <label className="text-sm font-medium">Amount Paid (TZS)</label>
-                  <input type="number" value={form.amountPaid} onChange={e => setForm(f => ({ ...f, amountPaid: e.target.value }))}
-                    placeholder={grandTotal.toString()} className="mt-1 w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                  <label style={S.lbl}>Kilicholipwa (TZS)</label>
+                  <input type="number" value={form.amountPaid} onChange={e=>setForm(f=>({...f,amountPaid:e.target.value}))} placeholder={grandTotal.toString()} style={S.inp}/>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Note</label>
-                  <input value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))}
-                    placeholder="Optional note" className="mt-1 w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                  <label style={S.lbl}>Maelezo</label>
+                  <input value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))} placeholder="Hiari" style={S.inp}/>
                 </div>
               </div>
             </div>
-            <div className="p-5 border-t flex gap-3">
-              <button onClick={() => setShowModal(false)} className="flex-1 py-2.5 border rounded-xl font-medium hover:bg-gray-50">Cancel</button>
-              <button onClick={savePurchase} disabled={saving} className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium flex items-center justify-center gap-2">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                {saving ? "Saving…" : "Record Purchase"}
-              </button>
+            <div style={S.mftr}>
+              <button onClick={()=>setShowModal(false)} style={S.cancelB}>Ghairi</button>
+              <button onClick={savePurchase} disabled={saving} style={S.saveB}>{saving?"Inahifadhi…":"Rekodi Manunuzi"}</button>
             </div>
           </div>
         </div>

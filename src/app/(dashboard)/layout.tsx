@@ -8,19 +8,35 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLang, type Lang } from "@/lib/i18n";
 
-type NavItem = { href: string; key: string; icon: string; color: string; bg: string; roles: string[] };
+type SubItem = { href: string; key: string };
+type NavItem = { href: string; key: string; icon: string; color: string; bg: string; roles: string[]; sub?: SubItem[] };
 
 const navItems: NavItem[] = [
-  { href: "/dashboard", key: "dashboard", icon: "📊", color: "#2563eb", bg: "#eff6ff", roles: ["SUPER_ADMIN","TENANT_ADMIN","STORE_MANAGER","CASHIER","ACCOUNTANT"] },
-  { href: "/pos",       key: "pos",       icon: "🛒", color: "#16a34a", bg: "#f0fdf4", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"] },
-  { href: "/products",  key: "products",  icon: "📦", color: "#7c3aed", bg: "#f5f3ff", roles: ["TENANT_ADMIN","STORE_MANAGER","ACCOUNTANT"] },
-  { href: "/inventory", key: "inventory", icon: "🏪", color: "#0891b2", bg: "#ecfeff", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
-  { href: "/customers", key: "customers", icon: "👥", color: "#db2777", bg: "#fdf2f8", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"] },
-  { href: "/suppliers", key: "suppliers", icon: "🚚", color: "#d97706", bg: "#fffbeb", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
-  { href: "/purchases", key: "purchases", icon: "🛍️", color: "#ea580c", bg: "#fff7ed", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
-  { href: "/accounting",key: "accounting",icon: "📒", color: "#059669", bg: "#ecfdf5", roles: ["TENANT_ADMIN","ACCOUNTANT"] },
-  { href: "/reports",   key: "reports",   icon: "📈", color: "#4f46e5", bg: "#eef2ff", roles: ["TENANT_ADMIN","STORE_MANAGER","ACCOUNTANT"] },
-  { href: "/settings",  key: "settings",  icon: "⚙️", color: "#374151", bg: "#f9fafb", roles: ["TENANT_ADMIN"] },
+  { href: "/dashboard",       key: "dashboard",   icon: "📊", color: "#2563eb", bg: "#eff6ff", roles: ["SUPER_ADMIN","TENANT_ADMIN","STORE_MANAGER","CASHIER","ACCOUNTANT"] },
+  { href: "/superadmin",      key: "superadmin",  icon: "⚡", color: "#f59e0b", bg: "#fffbeb", roles: ["SUPER_ADMIN"],
+    sub: [
+      { href: "/superadmin",          key: "sa_dashboard" },
+      { href: "/superadmin/users",    key: "sa_users" },
+      { href: "/superadmin/tenants",  key: "sa_tenants" },
+      { href: "/superadmin/messages", key: "sa_messages" },
+    ]
+  },
+  { href: "/pos",             key: "pos",         icon: "🛒", color: "#16a34a", bg: "#f0fdf4", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"] },
+  { href: "/products",        key: "products",    icon: "📦", color: "#7c3aed", bg: "#f5f3ff", roles: ["TENANT_ADMIN","STORE_MANAGER","ACCOUNTANT"] },
+  { href: "/inventory",       key: "inventory",   icon: "🏪", color: "#0891b2", bg: "#ecfeff", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
+  { href: "/customers",       key: "customers",   icon: "👥", color: "#db2777", bg: "#fdf2f8", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"] },
+  { href: "/suppliers",       key: "suppliers",   icon: "🚚", color: "#d97706", bg: "#fffbeb", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
+  { href: "/purchases",       key: "purchases",   icon: "🛍️", color: "#ea580c", bg: "#fff7ed", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
+  { href: "/accounting",      key: "accounting",  icon: "📒", color: "#059669", bg: "#ecfdf5", roles: ["TENANT_ADMIN","ACCOUNTANT"] },
+  { href: "/reports",         key: "reports",     icon: "📈", color: "#4f46e5", bg: "#eef2ff", roles: ["TENANT_ADMIN","STORE_MANAGER","ACCOUNTANT"] },
+  { href: "/staff",           key: "staff_roles", icon: "👨‍💼", color: "#0891b2", bg: "#ecfeff", roles: ["TENANT_ADMIN","STORE_MANAGER"],
+    sub: [
+      { href: "/staff",  key: "all_staff" },
+      { href: "/roles",  key: "all_roles" },
+    ]
+  },
+  { href: "/messages",        key: "messages",    icon: "💬", color: "#7c3aed", bg: "#f5f3ff", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
+  { href: "/settings",        key: "settings",    icon: "⚙️", color: "#374151", bg: "#f9fafb", roles: ["TENANT_ADMIN"] },
 ];
 
 const styles = `
@@ -169,11 +185,37 @@ const styles = `
   }
 `;
 
+const subLabels: Record<string,string> = {
+  sa_dashboard: "Admin Dashboard",
+  sa_users:     "All Users",
+  sa_tenants:   "Tenants",
+  sa_messages:  "Messages",
+  all_staff:    "All Staff",
+  all_roles:    "All Roles",
+};
+
+const mainLabels: Record<string,string> = {
+  superadmin:  "User Management",
+  staff_roles: "Staff & Roles",
+  messages:    "Messages",
+  dashboard:   "Dashboard",
+  pos:         "POS",
+  products:    "Products",
+  inventory:   "Inventory",
+  customers:   "Customers",
+  suppliers:   "Suppliers",
+  purchases:   "Purchases",
+  accounting:  "Accounting",
+  reports:     "Reports",
+  settings:    "Settings",
+};
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const sessionData = useSession();
   const session = sessionData?.data;
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [expandedKeys, setExpandedKeys] = useState<Record<string,boolean>>({superadmin:true,staff_roles:true});
   const { lang, t, setLang } = useLang();
   const role = (session?.user as any)?.role;
   const filteredNav = navItems.filter((item) => !role || item.roles.includes(role));
@@ -181,10 +223,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const tenantName = (session?.user as any)?.tenantName || (session?.user as any)?.tenantSlug || "PhidPOS";
   const userEmail = session?.user?.email || "";
   const initial = userName.charAt(0).toUpperCase();
+
+  // Derive page label from pathname
   const activeItem = filteredNav.find(n => pathname === n.href || pathname.startsWith(n.href + "/"));
-  const currentKey = activeItem?.key || "dashboard";
-  const currentLabel = t[currentKey as keyof typeof t] || currentKey;
-  const roleLabel = role?.replace(/_/g, " ") || "User";
+  let currentLabel = mainLabels[activeItem?.key || ""] || activeItem?.key || "Dashboard";
+  // Check if we're on a sub-page
+  for (const item of filteredNav) {
+    if (item.sub) {
+      const activeSub = item.sub.find(s => pathname === s.href || pathname.startsWith(s.href + "/"));
+      if (activeSub) { currentLabel = subLabels[activeSub.key] || activeSub.key; break; }
+    }
+  }
+
+  const roleLabel = role === "SUPER_ADMIN" ? "Super Admin" : role?.replace(/_/g, " ") || "User";
+  const displayName = role === "SUPER_ADMIN" ? "Admin" : userName;
+
+  function toggleExpand(key: string) {
+    setExpandedKeys(p => ({ ...p, [key]: !p[key] }));
+  }
 
   return (
     <>
@@ -206,19 +262,51 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {/* Nav */}
           <nav className="sidebar-nav">
             {filteredNav.map((item) => {
-              const active = pathname === item.href || pathname.startsWith(item.href + "/");
-              const label = t[item.key as keyof typeof t] || item.key;
+              const isExpanded = expandedKeys[item.key];
+              const hasSubMenu = item.sub && item.sub.length > 0;
+              const isParentActive = pathname === item.href || pathname.startsWith(item.href + "/");
+              const label = mainLabels[item.key] || t[item.key as keyof typeof t] || item.key;
+
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`nav-item${active ? " active" : ""}`}
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <span className="nav-icon-wrap" style={{ background: active ? "rgba(255,255,255,0.2)" : item.bg }}>{item.icon}</span>
-                  {label}
-                  <span className="nav-chevron">›</span>
-                </Link>
+                <div key={item.key}>
+                  {hasSubMenu ? (
+                    <div
+                      className={`nav-item${isParentActive ? " active" : ""}${isExpanded ? " expanded" : ""}`}
+                      onClick={() => toggleExpand(item.key)}
+                    >
+                      <span className="nav-icon-wrap" style={{ background: isParentActive ? "rgba(255,255,255,0.2)" : item.bg }}>{item.icon}</span>
+                      {label}
+                      <span className="nav-chevron">›</span>
+                    </div>
+                  ) : (
+                    <Link
+                      href={item.href}
+                      className={`nav-item${isParentActive && !hasSubMenu ? " active" : ""}`}
+                      onClick={() => setSidebarOpen(false)}
+                    >
+                      <span className="nav-icon-wrap" style={{ background: isParentActive ? "rgba(255,255,255,0.2)" : item.bg }}>{item.icon}</span>
+                      {label}
+                      <span className="nav-chevron">›</span>
+                    </Link>
+                  )}
+
+                  {hasSubMenu && isExpanded && (
+                    <div className="submenu">
+                      <div className="submenu-inner">
+                        {item.sub!.map(s => {
+                          const subActive = pathname === s.href || (s.href !== item.href && pathname.startsWith(s.href + "/"));
+                          const subLabel = subLabels[s.key] || s.key;
+                          return (
+                            <Link key={s.href} href={s.href} className={`sub-item${subActive ? " active" : ""}`}
+                              onClick={() => setSidebarOpen(false)}>
+                              {subLabel}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
               );
             })}
           </nav>
@@ -228,7 +316,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="sidebar-user">
               <div className="sidebar-avatar">{initial}</div>
               <div className="sidebar-user-info">
-                <div className="sidebar-user-name">{userName}</div>
+                <div className="sidebar-user-name">{displayName}</div>
                 <div className="sidebar-user-role">{roleLabel}</div>
                 {userEmail && <div className="sidebar-user-email">{userEmail}</div>}
               </div>
@@ -257,7 +345,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div className="topbar-user">
                 <div className="topbar-avatar">{initial}</div>
                 <div>
-                  <div className="topbar-name">{userName}</div>
+                  <div className="topbar-name">{displayName}</div>
                   <div className="topbar-role">{roleLabel}</div>
                 </div>
                 <span className="topbar-chevron">▼</span>

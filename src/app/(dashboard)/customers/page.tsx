@@ -3,9 +3,8 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";
-import { Plus, Search, Edit, Users, Phone, Mail, CreditCard, X, Loader2, Star, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 
 interface Customer {
   id: string;
@@ -93,195 +92,185 @@ export default function CustomersPage() {
     setSaving(false);
   }
 
-  const typeColors: Record<string, string> = {
-    RETAIL: "bg-blue-100 text-blue-700",
-    WHOLESALE: "bg-purple-100 text-purple-700",
-    VIP: "bg-amber-100 text-amber-700",
+  const typeColorMap: Record<string, [string,string]> = {
+    RETAIL: ["#dbeafe","#1d4ed8"],
+    WHOLESALE: ["#ede9fe","#7c3aed"],
+    VIP: ["#fef3c7","#b45309"],
+  };
+
+  const S: Record<string, React.CSSProperties> = {
+    page:    { padding:24, fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" },
+    hdr:     { display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 },
+    h1:      { fontSize:22, fontWeight:800, color:"#111", margin:0 },
+    sub:     { fontSize:13, color:"#6b7280", marginTop:4 },
+    addBtn:  { display:"flex", alignItems:"center", gap:6, padding:"9px 18px", background:"#2563eb", color:"#fff", border:"none", borderRadius:10, fontSize:13, fontWeight:700, cursor:"pointer" },
+    toolbar: { display:"flex", gap:10, marginBottom:16, flexWrap:"wrap" as const },
+    srchWrap:{ flex:1, minWidth:200, position:"relative" as const },
+    srchIco: { position:"absolute" as const, left:10, top:"50%", transform:"translateY(-50%)", fontSize:14, color:"#9ca3af" },
+    srchI:   { width:"100%", padding:"9px 12px 9px 34px", border:"1px solid #e5e7eb", borderRadius:10, fontSize:13, outline:"none", boxSizing:"border-box" as const },
+    sel:     { padding:"9px 12px", border:"1px solid #e5e7eb", borderRadius:10, fontSize:13, outline:"none", background:"#fff" },
+    card:    { background:"#fff", border:"1px solid #e5e7eb", borderRadius:14, overflow:"hidden", boxShadow:"0 1px 4px rgba(0,0,0,0.04)" },
+    th:      { padding:"11px 14px", fontSize:12, fontWeight:700, color:"#6b7280", textAlign:"left" as const, borderBottom:"1px solid #e5e7eb", background:"#f9fafb", whiteSpace:"nowrap" as const },
+    thr:     { padding:"11px 14px", fontSize:12, fontWeight:700, color:"#6b7280", textAlign:"right" as const, borderBottom:"1px solid #e5e7eb", background:"#f9fafb", whiteSpace:"nowrap" as const },
+    thc:     { padding:"11px 14px", fontSize:12, fontWeight:700, color:"#6b7280", textAlign:"center" as const, borderBottom:"1px solid #e5e7eb", background:"#f9fafb", whiteSpace:"nowrap" as const },
+    td:      { padding:"12px 14px", fontSize:13, color:"#374151", borderBottom:"1px solid #f3f4f6", verticalAlign:"middle" as const },
+    tdr:     { padding:"12px 14px", fontSize:13, color:"#374151", borderBottom:"1px solid #f3f4f6", textAlign:"right" as const, verticalAlign:"middle" as const },
+    overlay: { position:"fixed" as const, inset:0, background:"rgba(0,0,0,0.55)", zIndex:50, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
+    modal:   { background:"#fff", borderRadius:18, width:"100%", maxWidth:440, boxShadow:"0 20px 60px rgba(0,0,0,0.2)" },
+    mhdr:    { display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 20px", borderBottom:"1px solid #e5e7eb" },
+    mbody:   { padding:20 },
+    mftr:    { display:"flex", gap:10, padding:"14px 20px", borderTop:"1px solid #e5e7eb" },
+    lbl:     { fontSize:13, fontWeight:700, color:"#374151", display:"block", marginBottom:5 },
+    inp:     { width:"100%", padding:"9px 12px", border:"1px solid #e5e7eb", borderRadius:10, fontSize:13, outline:"none", boxSizing:"border-box" as const, marginBottom:12 },
+    cancelB: { flex:1, padding:"10px 0", borderRadius:12, border:"1px solid #e5e7eb", background:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", color:"#374151" },
+    saveB:   { flex:1, padding:"10px 0", borderRadius:12, border:"none", background:"#2563eb", color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer" },
+    saveGrn: { flex:1, padding:"10px 0", borderRadius:12, border:"none", background:"#16a34a", color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer" },
+    avatar:  { width:36, height:36, borderRadius:"50%", background:"linear-gradient(135deg,#60a5fa,#6366f1)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontSize:13, fontWeight:800, flexShrink:0 },
+    grid2:   { display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 },
   };
 
   return (
-    <div className="p-6 space-y-5">
-      <div className="flex items-center justify-between">
+    <div style={S.page}>
+      <div style={S.hdr}>
         <div>
-          <h1 className="text-2xl font-bold">Customers</h1>
-          <p className="text-muted-foreground text-sm">{total} customers registered</p>
+          <h1 style={S.h1}>👥 Wateja</h1>
+          <p style={S.sub}>{total} wateja wamesajiliwa</p>
         </div>
-        <button onClick={() => openModal()} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-          <Plus className="w-4 h-4" /> Add Customer
-        </button>
+        <button onClick={() => openModal()} style={S.addBtn}>＋ Ongeza Mteja</button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search customers…"
-            className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+      <div style={S.toolbar}>
+        <div style={S.srchWrap}>
+          <span style={S.srchIco}>🔍</span>
+          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Tafuta wateja…" style={S.srchI}/>
         </div>
-        <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)}
-          className="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-          <option value="">All Types</option>
-          <option value="RETAIL">Retail</option>
-          <option value="WHOLESALE">Wholesale</option>
+        <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} style={S.sel}>
+          <option value="">Aina Zote</option>
+          <option value="RETAIL">Rejareja</option>
+          <option value="WHOLESALE">Jumla</option>
           <option value="VIP">VIP</option>
         </select>
       </div>
 
-      {/* Table */}
-      <div className="bg-card border rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 border-b">
+      <div style={S.card}>
+        <div style={{overflowX:"auto"}}>
+          <table style={{width:"100%", borderCollapse:"collapse"}}>
+            <thead>
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Customer</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Type</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Loyalty Pts</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Debt</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Sales</th>
-                <th className="text-center px-4 py-3 font-medium text-muted-foreground">Actions</th>
+                <th style={S.th}>Mteja</th>
+                <th style={S.th}>Aina</th>
+                <th style={S.thr}>Pointi</th>
+                <th style={S.thr}>Deni</th>
+                <th style={S.thr}>Mauzo</th>
+                <th style={S.thc}>Vitendo</th>
               </tr>
             </thead>
             <tbody>
-              {loading ? Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i} className="border-b">
-                  {Array.from({ length: 6 }).map((_, j) => (
-                    <td key={j} className="px-4 py-3"><div className="h-4 bg-muted animate-pulse rounded" /></td>
-                  ))}
-                </tr>
-              )) : customers.map(c => (
-                <tr key={c.id} className="border-b hover:bg-muted/30 transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-                        {c.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="font-medium">{c.name}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {c.phone && <span className="text-xs text-muted-foreground flex items-center gap-0.5"><Phone className="w-3 h-3" />{c.phone}</span>}
-                          {c.email && <span className="text-xs text-muted-foreground flex items-center gap-0.5"><Mail className="w-3 h-3" />{c.email}</span>}
+              {loading ? Array.from({length:5}).map((_,i)=>(
+                <tr key={i}>{Array.from({length:6}).map((_,j)=>(
+                  <td key={j} style={S.td}><div style={{height:14,background:"#f3f4f6",borderRadius:6}}/></td>
+                ))}</tr>
+              )) : customers.map(c => {
+                const [tbg, tclr] = typeColorMap[c.type] || ["#f3f4f6","#6b7280"];
+                return (
+                  <tr key={c.id}>
+                    <td style={S.td}>
+                      <div style={{display:"flex", alignItems:"center", gap:10}}>
+                        <div style={S.avatar}>{c.name.charAt(0).toUpperCase()}</div>
+                        <div>
+                          <div style={{fontWeight:700, color:"#111"}}>{c.name}</div>
+                          <div style={{fontSize:11, color:"#9ca3af", marginTop:2}}>
+                            {c.phone && <span>📞 {c.phone}</span>}
+                            {c.email && <span style={{marginLeft:8}}>✉ {c.email}</span>}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${typeColors[c.type] || "bg-gray-100 text-gray-700"}`}>{c.type}</span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <span className="flex items-center justify-end gap-1 text-amber-600 font-medium">
-                      <Star className="w-3.5 h-3.5" />{c.loyaltyPoints}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    {Number(c.totalDebt) > 0 ? (
-                      <button onClick={() => { setDebtCustomer(c); setShowDebtModal(true); }}
-                        className="flex items-center justify-end gap-1 text-red-600 font-semibold hover:underline">
-                        <AlertCircle className="w-3.5 h-3.5" />{formatCurrency(c.totalDebt, "TZS")}
-                      </button>
-                    ) : <span className="text-green-600 font-medium">—</span>}
-                  </td>
-                  <td className="px-4 py-3 text-right text-muted-foreground">{c._count?.sales || 0}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-center gap-2">
-                      <button onClick={() => openModal(c)} className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600"><Edit className="w-4 h-4" /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td style={S.td}><span style={{display:"inline-block", padding:"3px 10px", borderRadius:20, fontSize:11, fontWeight:700, background:tbg, color:tclr}}>{c.type}</span></td>
+                    <td style={{...S.tdr, color:"#d97706", fontWeight:700}}>⭐ {c.loyaltyPoints}</td>
+                    <td style={S.tdr}>
+                      {Number(c.totalDebt) > 0
+                        ? <button onClick={() => { setDebtCustomer(c); setShowDebtModal(true); }} style={{background:"none", border:"none", cursor:"pointer", color:"#dc2626", fontWeight:700, fontSize:13}}>⚠ {formatCurrency(c.totalDebt,"TZS")}</button>
+                        : <span style={{color:"#16a34a", fontWeight:600}}>—</span>}
+                    </td>
+                    <td style={{...S.tdr, color:"#6b7280"}}>{c._count?.sales || 0}</td>
+                    <td style={{...S.td, textAlign:"center"}}>
+                      <button onClick={() => openModal(c)} style={{padding:"5px 12px", borderRadius:8, border:"1px solid #bfdbfe", background:"#eff6ff", color:"#2563eb", fontSize:12, fontWeight:700, cursor:"pointer"}}>✏ Edit</button>
+                    </td>
+                  </tr>
+                );
+              })}
               {!loading && customers.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">No customers found</td></tr>
+                <tr><td colSpan={6} style={{...S.td, textAlign:"center", padding:"40px 0", color:"#9ca3af"}}>Hakuna wateja walioopatikana</td></tr>
               )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Customer Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
-            <div className="flex items-center justify-between p-5 border-b">
-              <h3 className="text-lg font-bold">{editing ? "Edit Customer" : "Add Customer"}</h3>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+        <div style={S.overlay}>
+          <div style={S.modal}>
+            <div style={S.mhdr}>
+              <span style={{fontSize:15, fontWeight:800, color:"#111"}}>{editing?"✏ Hariri Mteja":"➕ Ongeza Mteja"}</span>
+              <button onClick={() => setShowModal(false)} style={{background:"none", border:"none", fontSize:22, cursor:"pointer", color:"#9ca3af", lineHeight:1}}>×</button>
             </div>
-            <div className="p-5 space-y-4">
+            <div style={S.mbody}>
               {[
-                { label: "Full Name *", key: "name", type: "text", placeholder: "John Mwamba" },
-                { label: "Phone Number", key: "phone", type: "tel", placeholder: "+255700000000" },
-                { label: "Email", key: "email", type: "email", placeholder: "john@example.com" },
-                { label: "Address", key: "address", type: "text", placeholder: "Dar es Salaam" },
-              ].map(field => (
-                <div key={field.key}>
-                  <label className="text-sm font-medium">{field.label}</label>
-                  <input type={field.type} value={(form as any)[field.key]}
-                    onChange={e => setForm(f => ({ ...f, [field.key]: e.target.value }))}
-                    placeholder={field.placeholder}
-                    className="mt-1 w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                {label:"Jina Kamili *", key:"name", type:"text", ph:"John Mwamba"},
+                {label:"Simu", key:"phone", type:"tel", ph:"+255700000000"},
+                {label:"Barua Pepe", key:"email", type:"email", ph:"john@mfano.com"},
+                {label:"Anwani", key:"address", type:"text", ph:"Dar es Salaam"},
+              ].map(f=>(
+                <div key={f.key}>
+                  <label style={S.lbl}>{f.label}</label>
+                  <input type={f.type} value={(form as any)[f.key]} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))} placeholder={f.ph} style={S.inp}/>
                 </div>
               ))}
-              <div className="grid grid-cols-2 gap-4">
+              <div style={S.grid2}>
                 <div>
-                  <label className="text-sm font-medium">Customer Type</label>
-                  <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
-                    className="mt-1 w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                    <option value="RETAIL">Retail</option>
-                    <option value="WHOLESALE">Wholesale</option>
+                  <label style={S.lbl}>Aina ya Mteja</label>
+                  <select value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))} style={{...S.inp, marginBottom:0}}>
+                    <option value="RETAIL">Rejareja</option>
+                    <option value="WHOLESALE">Jumla</option>
                     <option value="VIP">VIP</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Credit Limit (TZS)</label>
-                  <input type="number" value={form.creditLimit}
-                    onChange={e => setForm(f => ({ ...f, creditLimit: e.target.value }))}
-                    className="mt-1 w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                  <label style={S.lbl}>Kikomo cha Mkopo (TZS)</label>
+                  <input type="number" value={form.creditLimit} onChange={e=>setForm(f=>({...f,creditLimit:e.target.value}))} style={{...S.inp, marginBottom:0}}/>
                 </div>
               </div>
             </div>
-            <div className="p-5 border-t flex gap-3">
-              <button onClick={() => setShowModal(false)} className="flex-1 py-2.5 border rounded-xl font-medium hover:bg-gray-50">Cancel</button>
-              <button onClick={saveCustomer} disabled={saving} className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium flex items-center justify-center gap-2">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                {saving ? "Saving…" : (editing ? "Update" : "Create")}
-              </button>
+            <div style={S.mftr}>
+              <button onClick={()=>setShowModal(false)} style={S.cancelB}>Ghairi</button>
+              <button onClick={saveCustomer} disabled={saving} style={S.saveB}>{saving?"Inahifadhi…":(editing?"Sasisha":"Unda")}</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Debt Payment Modal */}
       {showDebtModal && debtCustomer && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
-            <div className="flex items-center justify-between p-5 border-b">
-              <h3 className="text-lg font-bold">Record Debt Payment</h3>
-              <button onClick={() => setShowDebtModal(false)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+        <div style={S.overlay}>
+          <div style={{...S.modal, maxWidth:380}}>
+            <div style={S.mhdr}>
+              <span style={{fontSize:15, fontWeight:800, color:"#111"}}>💳 Rekodi ya Malipo</span>
+              <button onClick={()=>setShowDebtModal(false)} style={{background:"none", border:"none", fontSize:22, cursor:"pointer", color:"#9ca3af", lineHeight:1}}>×</button>
             </div>
-            <div className="p-5 space-y-4">
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                <p className="font-semibold text-red-800">{debtCustomer.name}</p>
-                <p className="text-sm text-red-600 mt-1">Outstanding: <span className="font-bold">{formatCurrency(debtCustomer.totalDebt, "TZS")}</span></p>
+            <div style={S.mbody}>
+              <div style={{background:"#fef2f2", borderRadius:12, padding:"12px 16px", marginBottom:16, border:"1px solid #fecaca"}}>
+                <div style={{fontWeight:800, color:"#b91c1c"}}>{debtCustomer.name}</div>
+                <div style={{fontSize:13, color:"#dc2626", marginTop:4}}>Deni: <strong>{formatCurrency(debtCustomer.totalDebt,"TZS")}</strong></div>
               </div>
-              <div>
-                <label className="text-sm font-medium">Payment Amount (TZS) *</label>
-                <input type="number" value={debtAmount} onChange={e => setDebtAmount(e.target.value)}
-                  max={debtCustomer.totalDebt} placeholder="0"
-                  className="mt-1 w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none text-right text-lg font-bold" />
-                <button onClick={() => setDebtAmount(debtCustomer.totalDebt.toString())}
-                  className="mt-1 text-xs text-blue-600 hover:underline">Pay full amount</button>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Note (optional)</label>
-                <input type="text" value={debtNote} onChange={e => setDebtNote(e.target.value)}
-                  placeholder="e.g. Cash payment"
-                  className="mt-1 w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
-              </div>
+              <label style={S.lbl}>Kiasi cha Malipo (TZS) *</label>
+              <input type="number" value={debtAmount} onChange={e=>setDebtAmount(e.target.value)} max={debtCustomer.totalDebt} placeholder="0" style={{...S.inp, textAlign:"right", fontSize:18, fontWeight:900}}/>
+              <button onClick={()=>setDebtAmount(debtCustomer.totalDebt.toString())} style={{background:"none", border:"none", cursor:"pointer", fontSize:12, color:"#2563eb", textDecoration:"underline", marginBottom:12, display:"block"}}>Lipa kiasi chote</button>
+              <label style={S.lbl}>Maelezo (hiari)</label>
+              <input type="text" value={debtNote} onChange={e=>setDebtNote(e.target.value)} placeholder="mfano: Malipo ya pesa taslimu" style={S.inp}/>
             </div>
-            <div className="p-5 border-t flex gap-3">
-              <button onClick={() => setShowDebtModal(false)} className="flex-1 py-2.5 border rounded-xl font-medium hover:bg-gray-50">Cancel</button>
-              <button onClick={recordDebtPayment} disabled={saving} className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium flex items-center justify-center gap-2">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                {saving ? "Recording…" : "Record Payment"}
-              </button>
+            <div style={S.mftr}>
+              <button onClick={()=>setShowDebtModal(false)} style={S.cancelB}>Ghairi</button>
+              <button onClick={recordDebtPayment} disabled={saving} style={S.saveGrn}>{saving?"Inarekodi…":"Rekodi Malipo"}</button>
             </div>
           </div>
         </div>
