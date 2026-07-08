@@ -2,7 +2,6 @@
 export const dynamic = "force-dynamic";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -16,31 +15,37 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
     try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
+      // Step 1: Get CSRF token
+      const csrfRes = await fetch("/api/auth/csrf", { credentials: "include" });
+      if (!csrfRes.ok) throw new Error("CSRF fetch failed");
+      const { csrfToken } = await csrfRes.json();
+
+      // Step 2: Post credentials with CSRF token
+      await fetch("/api/auth/callback/credentials", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        credentials: "include",
+        redirect: "manual",
+        body: new URLSearchParams({
+          email,
+          password,
+          csrfToken,
+          callbackUrl: "/dashboard",
+          json: "true",
+        }).toString(),
       });
 
-      if (!result) {
-        setError("Hitilafu ya seva. Jaribu tena.");
-        return;
-      }
-
-      if (result.error || !result.ok) {
-        setError("Barua pepe au nywila si sahihi.");
-        return;
-      }
-
-      // Login succeeded - fetch session to get role
-      const sessionRes = await fetch("/api/auth/session");
+      // Step 3: Check session
+      const sessionRes = await fetch("/api/auth/session", { credentials: "include" });
       const session = await sessionRes.json();
       const role = (session?.user as any)?.role;
 
       if (role === "SUPER_ADMIN") {
         window.location.replace("/superadmin");
-      } else {
+      } else if (role) {
         window.location.replace("/dashboard");
+      } else {
+        setError("Barua pepe au nywila si sahihi.");
       }
     } catch {
       setError("Hitilafu imetokea. Jaribu tena.");
