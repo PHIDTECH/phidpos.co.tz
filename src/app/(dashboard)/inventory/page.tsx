@@ -3,9 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";
-import { Search, Package, AlertTriangle, RefreshCw, Edit, X, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
-import { formatDate } from "@/lib/utils";
 
 interface InventoryItem {
   id: string;
@@ -15,9 +13,24 @@ interface InventoryItem {
   lastUpdated: string;
 }
 
+interface Movement {
+  id: string;
+  type: string;
+  quantityBefore: number;
+  quantityAfter: number;
+  change: number;
+  note?: string;
+  createdAt: string;
+  product?: { name: string };
+  user?: { name: string };
+}
+
 export default function InventoryPage() {
+  const [tab, setTab] = useState<"stock" | "movements">("stock");
   const [items, setItems] = useState<InventoryItem[]>([]);
+  const [movements, setMovements] = useState<Movement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMov, setLoadingMov] = useState(false);
   const [search, setSearch] = useState("");
   const [lowOnly, setLowOnly] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -28,6 +41,7 @@ export default function InventoryPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => { loadData(); }, [search, lowOnly]);
+  useEffect(() => { if (tab === "movements") loadMovements(); }, [tab]);
 
   async function loadData() {
     setLoading(true);
@@ -36,188 +50,260 @@ export default function InventoryPage() {
       const res = await fetch(`/api/inventory?${params}`);
       const data = await res.json();
       setItems(data.inventories || []);
-    } catch { toast.error("Failed to load inventory"); }
+    } catch { toast.error("Imeshindwa kupakia hifadhi"); }
     setLoading(false);
   }
 
+  async function loadMovements() {
+    setLoadingMov(true);
+    try {
+      const res = await fetch("/api/inventory/movements");
+      const data = await res.json();
+      setMovements(data.movements || []);
+    } catch { /* silent */ }
+    setLoadingMov(false);
+  }
+
   function openAdjust(item: InventoryItem) {
-    setSelected(item);
-    setAdjQty("");
-    setAdjNote("");
-    setAdjType("ADD");
-    setShowModal(true);
+    setSelected(item); setAdjQty(""); setAdjNote(""); setAdjType("ADD"); setShowModal(true);
   }
 
   async function saveAdjustment() {
-    if (!selected || !adjQty) { toast.error("Enter quantity"); return; }
+    if (!selected || !adjQty) { toast.error("Ingiza idadi"); return; }
     setSaving(true);
     try {
       const res = await fetch("/api/inventory", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          inventoryId: selected.id,
-          type: adjType,
-          quantity: parseFloat(adjQty),
-          note: adjNote,
-        }),
+        body: JSON.stringify({ inventoryId: selected.id, type: adjType, quantity: parseFloat(adjQty), note: adjNote }),
       });
       if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
-      toast.success("Inventory updated");
+      toast.success("Hifadhi imesasishwa");
       setShowModal(false);
       loadData();
-    } catch (err: any) { toast.error(err.message || "Failed"); }
+    } catch (err: any) { toast.error(err.message || "Imeshindwa"); }
     setSaving(false);
   }
 
   const lowCount = items.filter(i => i.quantity <= i.product.minStockLevel).length;
 
+  const dynS = {
+    tab:     (active: boolean): React.CSSProperties => ({ padding:"8px 20px", borderRadius:8, border:"none", cursor:"pointer", fontSize:13, fontWeight:700, background:active?"#fff":"transparent", color:active?"#2563eb":"#6b7280", boxShadow:active?"0 1px 4px rgba(0,0,0,0.1)":"none", transition:"all 0.15s" }),
+    lowBtn:  (on: boolean): React.CSSProperties => ({ padding:"9px 16px", borderRadius:10, border:`1px solid ${on?"#f59e0b":"#e5e7eb"}`, background:on?"#f59e0b":"#fff", color:on?"#fff":"#374151", fontSize:13, fontWeight:600, cursor:"pointer" }),
+    badge:   (low: boolean): React.CSSProperties => ({ display:"inline-flex", alignItems:"center", gap:4, padding:"3px 10px", borderRadius:20, fontSize:11, fontWeight:700, background:low?"#fef2f2":"#f0fdf4", color:low?"#dc2626":"#16a34a" }),
+    typeBtn: (active: boolean): React.CSSProperties => ({ padding:"9px 4px", borderRadius:10, border:`2px solid ${active?"#2563eb":"#e5e7eb"}`, background:active?"#eff6ff":"#fff", color:active?"#2563eb":"#374151", fontSize:12, fontWeight:700, cursor:"pointer", textAlign:"center" }),
+    saveB:   (dis: boolean): React.CSSProperties => ({ flex:1, padding:"10px 0", borderRadius:12, border:"none", background:dis?"#d1d5db":"#2563eb", color:"#fff", fontSize:14, fontWeight:700, cursor:dis?"not-allowed":"pointer" }),
+    movType: (t: string): React.CSSProperties => {
+      const map: Record<string, [string,string]> = {
+        SALE:["#fef2f2","#dc2626"], PURCHASE:["#f0fdf4","#16a34a"],
+        ADJUSTMENT:["#eff6ff","#2563eb"], RETURN:["#fdf4ff","#9333ea"], TRANSFER:["#fff7ed","#c2410c"]
+      };
+      const [bg,color] = map[t] || ["#f3f4f6","#6b7280"];
+      return { display:"inline-flex", alignItems:"center", padding:"2px 10px", borderRadius:20, fontSize:11, fontWeight:700, background:bg, color };
+    },
+  };
+
+  const S: Record<string, React.CSSProperties> = {
+    page:    { padding: 24, fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" },
+    hdr:     { display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 },
+    h1:      { fontSize:22, fontWeight:800, color:"#111", margin:0 },
+    sub:     { fontSize:13, color:"#6b7280", marginTop:4 },
+    tabs:    { display:"flex", gap:4, marginBottom:20, background:"#f3f4f6", padding:4, borderRadius:10, width:"fit-content" },
+    toolbar: { display:"flex", gap:10, marginBottom:16, flexWrap:"wrap" as const },
+    srch:    { flex:1, minWidth:200, position:"relative" as const },
+    srchI:   { width:"100%", padding:"9px 12px 9px 34px", border:"1px solid #e5e7eb", borderRadius:10, fontSize:13, outline:"none", boxSizing:"border-box" as const },
+    srchIco: { position:"absolute" as const, left:10, top:"50%", transform:"translateY(-50%)", fontSize:14, color:"#9ca3af" },
+    refBtn:  { padding:"9px 16px", borderRadius:10, border:"1px solid #e5e7eb", background:"#fff", color:"#374151", fontSize:13, fontWeight:600, cursor:"pointer", display:"flex", alignItems:"center", gap:6 },
+    warn:    { display:"flex", alignItems:"center", gap:10, background:"#fffbeb", border:"1px solid #fde68a", borderRadius:10, padding:"10px 16px", marginBottom:16, fontSize:13, color:"#92400e", fontWeight:600 },
+    card:    { background:"#fff", border:"1px solid #e5e7eb", borderRadius:14, overflow:"hidden", boxShadow:"0 1px 4px rgba(0,0,0,0.04)" },
+    th:      { padding:"11px 14px", fontSize:12, fontWeight:700, color:"#6b7280", textAlign:"left" as const, borderBottom:"1px solid #e5e7eb", background:"#f9fafb", whiteSpace:"nowrap" as const },
+    thr:     { padding:"11px 14px", fontSize:12, fontWeight:700, color:"#6b7280", textAlign:"right" as const, borderBottom:"1px solid #e5e7eb", background:"#f9fafb", whiteSpace:"nowrap" as const },
+    td:      { padding:"12px 14px", fontSize:13, color:"#374151", borderBottom:"1px solid #f3f4f6", verticalAlign:"middle" as const },
+    tdr:     { padding:"12px 14px", fontSize:13, color:"#374151", borderBottom:"1px solid #f3f4f6", textAlign:"right" as const, verticalAlign:"middle" as const },
+    adjBtn:  { padding:"6px 14px", borderRadius:8, border:"1px solid #bfdbfe", background:"#eff6ff", color:"#2563eb", fontSize:12, fontWeight:700, cursor:"pointer" },
+    overlay: { position:"fixed" as const, inset:0, background:"rgba(0,0,0,0.55)", zIndex:50, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
+    modal:   { background:"#fff", borderRadius:18, width:"100%", maxWidth:400, boxShadow:"0 20px 60px rgba(0,0,0,0.2)" },
+    mhdr:    { display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 20px", borderBottom:"1px solid #e5e7eb" },
+    mbody:   { padding:20 },
+    mftr:    { display:"flex", gap:10, padding:"14px 20px", borderTop:"1px solid #e5e7eb" },
+    typGrid: { display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8, marginTop:8 },
+    fldLbl:  { fontSize:13, fontWeight:700, color:"#374151", display:"block", marginBottom:6 },
+    fldInp:  { width:"100%", padding:"9px 12px", border:"1px solid #e5e7eb", borderRadius:10, fontSize:14, outline:"none", boxSizing:"border-box" as const },
+    cancelB: { flex:1, padding:"10px 0", borderRadius:12, border:"1px solid #e5e7eb", background:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", color:"#374151" },
+  };
+
   return (
-    <div className="p-6 space-y-5">
-      <div className="flex items-center justify-between">
+    <div style={S.page}>
+      {/* Header */}
+      <div style={S.hdr}>
         <div>
-          <h1 className="text-2xl font-bold">Inventory</h1>
-          <p className="text-muted-foreground text-sm">{items.length} items · {lowCount} low stock</p>
+          <h1 style={S.h1}>📦 Usimamizi wa Hifadhi</h1>
+          <p style={S.sub}>{items.length} bidhaa · {lowCount} hifadhi ndogo</p>
         </div>
-        <button onClick={loadData} className="flex items-center gap-2 border px-3 py-2 rounded-lg text-sm hover:bg-muted">
-          <RefreshCw className="w-4 h-4" /> Refresh
-        </button>
+        <button onClick={loadData} style={S.refBtn}>🔄 Refresh</button>
       </div>
 
-      {lowCount > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 flex items-center gap-3">
-          <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0" />
-          <span className="text-sm font-medium text-amber-800">{lowCount} product(s) are below minimum stock level</span>
-          <button onClick={() => setLowOnly(true)} className="ml-auto text-xs text-amber-700 underline">Show only low stock</button>
+      {/* Tabs */}
+      <div style={S.tabs}>
+        <button style={dynS.tab(tab==="stock")} onClick={() => setTab("stock")}>📦 Hali ya Hifadhi</button>
+        <button style={dynS.tab(tab==="movements")} onClick={() => setTab("movements")}>📋 Historia ya Mauzo</button>
+      </div>
+
+      {tab === "stock" && (
+        <>
+          {lowCount > 0 && (
+            <div style={S.warn}>
+              <span style={{fontSize:18}}>⚠️</span>
+              <span>{lowCount} bidhaa ziko chini ya kiwango cha chini</span>
+              <button onClick={() => setLowOnly(true)} style={{marginLeft:"auto",background:"none",border:"none",cursor:"pointer",fontSize:12,color:"#92400e",textDecoration:"underline",fontWeight:700}}>Onyesha tu</button>
+            </div>
+          )}
+          <div style={S.toolbar}>
+            <div style={S.srch}>
+              <span style={S.srchIco}>🔍</span>
+              <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Tafuta bidhaa…" style={S.srchI} />
+            </div>
+            <button onClick={() => setLowOnly(p => !p)} style={dynS.lowBtn(lowOnly)}>
+              {lowOnly ? "✓ Hifadhi Ndogo" : "🔴 Hifadhi Ndogo"}
+            </button>
+          </div>
+          <div style={S.card}>
+            <div style={{overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse"}}>
+                <thead>
+                  <tr>
+                    <th style={S.th}>Bidhaa</th>
+                    <th style={S.th}>Kategoria</th>
+                    <th style={S.th}>Duka</th>
+                    <th style={S.thr}>Idadi</th>
+                    <th style={S.thr}>Kiwango cha Chini</th>
+                    <th style={S.th}>Hali</th>
+                    <th style={S.th}>Imesasishwa</th>
+                    <th style={{...S.th,textAlign:"center"}}>Rekebisha</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    Array.from({length:6}).map((_,i) => (
+                      <tr key={i}>
+                        {Array.from({length:8}).map((_,j) => (
+                          <td key={j} style={S.td}><div style={{height:14,background:"#f3f4f6",borderRadius:6}} /></td>
+                        ))}
+                      </tr>
+                    ))
+                  ) : items.length === 0 ? (
+                    <tr><td colSpan={8} style={{...S.td,textAlign:"center",padding:"40px 0",color:"#9ca3af"}}>Hakuna rekodi za hifadhi</td></tr>
+                  ) : items.map(item => {
+                    const isLow = item.quantity <= item.product.minStockLevel;
+                    return (
+                      <tr key={item.id} style={{background:isLow?"#fff9f9":"#fff"}}>
+                        <td style={S.td}>
+                          <div style={{fontWeight:700,color:"#111"}}>{item.product.name}</div>
+                          {item.product.sku && <div style={{fontSize:11,color:"#9ca3af",marginTop:2}}>SKU: {item.product.sku}</div>}
+                        </td>
+                        <td style={S.td}>{item.product.category?.name || "—"}</td>
+                        <td style={S.td}>{item.store.name}</td>
+                        <td style={S.tdr}>
+                          <span style={{fontSize:18,fontWeight:900,color:isLow?"#dc2626":"#111"}}>{item.quantity}</span>
+                          {item.product.unit && <span style={{fontSize:11,color:"#9ca3af",marginLeft:4}}>{item.product.unit.abbreviation}</span>}
+                        </td>
+                        <td style={S.tdr}>{item.product.minStockLevel}</td>
+                        <td style={S.td}><span style={dynS.badge(isLow)}>{isLow ? "⚠ Ndogo" : "✓ Inatosha"}</span></td>
+                        <td style={{...S.td,fontSize:11,color:"#9ca3af"}}>{item.lastUpdated ? new Date(item.lastUpdated).toLocaleDateString("sw") : "—"}</td>
+                        <td style={{...S.td,textAlign:"center"}}>
+                          <button onClick={() => openAdjust(item)} style={S.adjBtn}>✏ Rekebisha</button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {tab === "movements" && (
+        <div style={S.card}>
+          <div style={{overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse"}}>
+              <thead>
+                <tr>
+                  <th style={S.th}>Bidhaa</th>
+                  <th style={S.th}>Aina</th>
+                  <th style={S.thr}>Kabla</th>
+                  <th style={S.thr}>Mabadiliko</th>
+                  <th style={S.thr}>Baada</th>
+                  <th style={S.th}>Kumbuka</th>
+                  <th style={S.th}>Mtumiaji</th>
+                  <th style={S.th}>Tarehe</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loadingMov ? (
+                  Array.from({length:6}).map((_,i)=>(
+                    <tr key={i}>{Array.from({length:8}).map((_,j)=>(<td key={j} style={S.td}><div style={{height:14,background:"#f3f4f6",borderRadius:6}}/></td>))}</tr>
+                  ))
+                ) : movements.length === 0 ? (
+                  <tr><td colSpan={8} style={{...S.td,textAlign:"center",padding:"40px 0",color:"#9ca3af"}}>Hakuna historia ya mauzo bado</td></tr>
+                ) : movements.map(m => (
+                  <tr key={m.id}>
+                    <td style={{...S.td,fontWeight:700}}>{m.product?.name || "—"}</td>
+                    <td style={S.td}><span style={dynS.movType(m.type)}>{m.type}</span></td>
+                    <td style={S.tdr}>{m.quantityBefore}</td>
+                    <td style={{...S.tdr,fontWeight:800,color:m.change < 0?"#dc2626":"#16a34a"}}>{m.change > 0 ? `+${m.change}` : m.change}</td>
+                    <td style={S.tdr}>{m.quantityAfter}</td>
+                    <td style={{...S.td,fontSize:12,color:"#6b7280"}}>{m.note || "—"}</td>
+                    <td style={{...S.td,fontSize:12}}>{m.user?.name || "—"}</td>
+                    <td style={{...S.td,fontSize:11,color:"#9ca3af"}}>{new Date(m.createdAt).toLocaleString("sw")}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products…"
-            className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
-        </div>
-        <button onClick={() => setLowOnly(prev => !prev)}
-          className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${lowOnly ? "bg-amber-500 text-white border-amber-500" : "hover:bg-muted"}`}>
-          {lowOnly ? "Showing Low Stock" : "Low Stock Only"}
-        </button>
-      </div>
-
-      <div className="bg-card border rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 border-b">
-              <tr>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Product</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Category</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Store</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Qty</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Min Level</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Last Updated</th>
-                <th className="text-center px-4 py-3 font-medium text-muted-foreground">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? Array.from({ length: 8 }).map((_, i) => (
-                <tr key={i} className="border-b">
-                  {Array.from({ length: 8 }).map((_, j) => (
-                    <td key={j} className="px-4 py-3"><div className="h-4 bg-muted animate-pulse rounded" /></td>
-                  ))}
-                </tr>
-              )) : items.map(item => {
-                const isLow = item.quantity <= item.product.minStockLevel;
-                return (
-                  <tr key={item.id} className={`border-b hover:bg-muted/30 transition-colors ${isLow ? "bg-red-50/50" : ""}`}>
-                    <td className="px-4 py-3">
-                      <div>
-                        <p className="font-medium">{item.product.name}</p>
-                        {item.product.sku && <p className="text-xs text-muted-foreground">SKU: {item.product.sku}</p>}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">{item.product.category?.name || "—"}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{item.store.name}</td>
-                    <td className="px-4 py-3 text-right">
-                      <span className={`font-bold text-lg ${isLow ? "text-red-600" : "text-gray-800"}`}>
-                        {item.quantity}
-                      </span>
-                      {item.product.unit && <span className="text-xs text-muted-foreground ml-1">{item.product.unit.abbreviation}</span>}
-                    </td>
-                    <td className="px-4 py-3 text-right text-muted-foreground">{item.product.minStockLevel}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${isLow ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
-                        {isLow ? "⚠ Low Stock" : "✓ In Stock"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{formatDate(item.lastUpdated)}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex justify-center">
-                        <button onClick={() => openAdjust(item)} className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600">
-                          <Edit className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-              {!loading && items.length === 0 && (
-                <tr><td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">No inventory records found</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
       {showModal && selected && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
-            <div className="flex items-center justify-between p-5 border-b">
-              <h3 className="text-lg font-bold">Adjust Inventory</h3>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+        <div style={S.overlay}>
+          <div style={S.modal}>
+            <div style={S.mhdr}>
+              <span style={{fontSize:15,fontWeight:800,color:"#111"}}>✏ Rekebisha Hifadhi</span>
+              <button onClick={() => setShowModal(false)} style={{background:"none",border:"none",fontSize:22,cursor:"pointer",color:"#9ca3af",lineHeight:1}}>×</button>
             </div>
-            <div className="p-5 space-y-4">
-              <div className="bg-blue-50 rounded-xl p-4">
-                <p className="font-semibold text-blue-800">{selected.product.name}</p>
-                <p className="text-sm text-blue-600 mt-1">Current stock: <span className="font-bold">{selected.quantity}</span></p>
+            <div style={S.mbody}>
+              <div style={{background:"#eff6ff",borderRadius:12,padding:"12px 16px",marginBottom:16}}>
+                <div style={{fontWeight:800,color:"#1d4ed8"}}>{selected.product.name}</div>
+                <div style={{fontSize:13,color:"#3b82f6",marginTop:4}}>Hifadhi ya sasa: <strong>{selected.quantity}</strong></div>
               </div>
-              <div>
-                <label className="text-sm font-medium">Adjustment Type</label>
-                <div className="grid grid-cols-3 gap-2 mt-1">
-                  {(["ADD", "SUBTRACT", "SET"] as const).map(type => (
-                    <button key={type} onClick={() => setAdjType(type)}
-                      className={`py-2 rounded-lg border text-xs font-medium transition-colors ${adjType === type ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 hover:border-gray-300"}`}>
-                      {type === "ADD" ? "+ Add" : type === "SUBTRACT" ? "- Subtract" : "= Set"}
-                    </button>
-                  ))}
-                </div>
+              <label style={S.fldLbl}>Aina ya Mabadiliko</label>
+              <div style={S.typGrid}>
+                {(["ADD","SUBTRACT","SET"] as const).map(type => (
+                  <button key={type} onClick={() => setAdjType(type)} style={dynS.typeBtn(adjType===type)}>
+                    {type==="ADD"?"+Ongeza":type==="SUBTRACT"?"-Punguza":"=Weka"}
+                  </button>
+                ))}
               </div>
-              <div>
-                <label className="text-sm font-medium">Quantity *</label>
-                <input type="number" value={adjQty} onChange={e => setAdjQty(e.target.value)} min="0"
-                  className="mt-1 w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none text-right text-lg font-bold" />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Note (optional)</label>
-                <input type="text" value={adjNote} onChange={e => setAdjNote(e.target.value)}
-                  placeholder="e.g. Stock count adjustment"
-                  className="mt-1 w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
-              </div>
+              <label style={{...S.fldLbl,marginTop:16}}>Idadi *</label>
+              <input type="number" value={adjQty} onChange={e => setAdjQty(e.target.value)} min="0"
+                style={{...S.fldInp,textAlign:"right",fontSize:20,fontWeight:900}} />
+              <label style={{...S.fldLbl,marginTop:12}}>Maelezo (si lazima)</label>
+              <input type="text" value={adjNote} onChange={e => setAdjNote(e.target.value)}
+                placeholder="mfano: Hesabu ya hifadhi" style={S.fldInp} />
               {adjQty && (
-                <div className="bg-gray-50 rounded-lg p-3 text-sm">
-                  <p className="text-muted-foreground">New quantity will be: <span className="font-bold text-gray-900">
-                    {adjType === "ADD" ? selected.quantity + parseFloat(adjQty || "0") :
-                     adjType === "SUBTRACT" ? Math.max(0, selected.quantity - parseFloat(adjQty || "0")) :
-                     parseFloat(adjQty || "0")}
-                  </span></p>
+                <div style={{marginTop:12,background:"#f9fafb",borderRadius:10,padding:"10px 14px",fontSize:13}}>
+                  Idadi mpya: <strong style={{fontSize:16,color:"#111"}}>
+                    {adjType==="ADD"?selected.quantity+parseFloat(adjQty||"0"):
+                     adjType==="SUBTRACT"?Math.max(0,selected.quantity-parseFloat(adjQty||"0")):
+                     parseFloat(adjQty||"0")}
+                  </strong>
                 </div>
               )}
             </div>
-            <div className="p-5 border-t flex gap-3">
-              <button onClick={() => setShowModal(false)} className="flex-1 py-2.5 border rounded-xl font-medium hover:bg-gray-50">Cancel</button>
-              <button onClick={saveAdjustment} disabled={saving} className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium flex items-center justify-center gap-2">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                {saving ? "Saving…" : "Apply"}
+            <div style={S.mftr}>
+              <button onClick={() => setShowModal(false)} style={S.cancelB}>Ghairi</button>
+              <button onClick={saveAdjustment} disabled={saving} style={dynS.saveB(saving)}>
+                {saving ? "Inahifadhi…" : "Hifadhi"}
               </button>
             </div>
           </div>

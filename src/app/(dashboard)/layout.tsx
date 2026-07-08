@@ -93,6 +93,7 @@ const styles = `
   .sidebar-user-info { overflow: hidden; flex: 1; }
   .sidebar-user-name { font-size: 12px; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sidebar-user-role { font-size: 10px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+  .sidebar-user-email { font-size: 10px; color: #9ca3af; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
   .btn-signout {
     display: flex; align-items: center; gap: 10px;
     padding: 9px 10px; border-radius: 10px; width: 100%;
@@ -140,6 +141,13 @@ const styles = `
   .topbar-name { font-size: 13px; font-weight: 700; color: #111; }
   .topbar-role { font-size: 11px; color: #6b7280; margin-top: 1px; }
   .topbar-chevron { font-size: 10px; color: #9ca3af; margin-left: 2px; }
+  .topbar-logout {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 8px; border: 1px solid #fecaca;
+    background: #fef2f2; cursor: pointer; font-size: 13px; font-weight: 600; color: #dc2626;
+    transition: background 0.15s;
+  }
+  .topbar-logout:hover { background: #fee2e2; }
 
   .page-content { flex: 1; overflow-y: auto; padding: 24px; background: #f3f4f6; }
 
@@ -170,7 +178,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const role = (session?.user as any)?.role;
   const filteredNav = navItems.filter((item) => !role || item.roles.includes(role));
   const userName = session?.user?.name || "User";
-  const tenantName = (session?.user as any)?.tenantSlug || "PhidPOS";
+  const tenantName = (session?.user as any)?.tenantName || (session?.user as any)?.tenantSlug || "PhidPOS";
+  const userEmail = session?.user?.email || "";
   const initial = userName.charAt(0).toUpperCase();
   const activeItem = filteredNav.find(n => pathname === n.href || pathname.startsWith(n.href + "/"));
   const currentKey = activeItem?.key || "dashboard";
@@ -221,6 +230,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div className="sidebar-user-info">
                 <div className="sidebar-user-name">{userName}</div>
                 <div className="sidebar-user-role">{roleLabel}</div>
+                {userEmail && <div className="sidebar-user-email">{userEmail}</div>}
               </div>
             </div>
             <button className="btn-signout" onClick={() => signOut({ callbackUrl: "/login" })}>
@@ -252,6 +262,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </div>
                 <span className="topbar-chevron">▼</span>
               </div>
+              {/* Logout */}
+              <button className="topbar-logout" onClick={() => signOut({ callbackUrl: "/login" })}>
+                🚪 {t.signOut}
+              </button>
             </div>
           </header>
 

@@ -17,6 +17,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.tenantId = (user as any).tenantId;
         token.storeId = (user as any).storeId;
         token.tenantSlug = (user as any).tenantSlug;
+        token.tenantName = (user as any).tenantName;
       }
       return token;
     },
@@ -27,6 +28,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         (session.user as any).tenantId = token.tenantId;
         (session.user as any).storeId = token.storeId;
         (session.user as any).tenantSlug = token.tenantSlug;
+        (session.user as any).tenantName = token.tenantName;
       }
       return session;
     },
@@ -71,7 +73,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email as string },
-          include: { tenant: { select: { slug: true, status: true } } },
+          include: { tenant: { select: { slug: true, name: true, status: true } } },
         });
 
         if (!user) {
@@ -105,6 +107,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           tenantId: user.tenantId ?? undefined,
           storeId: user.storeId ?? undefined,
           tenantSlug: user.tenant?.slug ?? undefined,
+          tenantName: user.tenant?.name ?? undefined,
         };
       },
     }),
