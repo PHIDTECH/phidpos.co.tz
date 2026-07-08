@@ -17,11 +17,13 @@ export default function LoginPage() {
     try {
       // Step 1: Get CSRF token
       const csrfRes = await fetch("/api/auth/csrf", { credentials: "include" });
-      if (!csrfRes.ok) throw new Error("CSRF fetch failed");
-      const { csrfToken } = await csrfRes.json();
+      if (!csrfRes.ok) throw new Error("CSRF fetch failed: " + csrfRes.status);
+      const csrfData = await csrfRes.json();
+      const csrfToken = csrfData.csrfToken;
+      console.log("[LOGIN] CSRF token obtained:", csrfToken ? "yes" : "no");
 
       // Step 2: Post credentials with CSRF token
-      await fetch("/api/auth/callback/credentials", {
+      const loginRes = await fetch("/api/auth/callback/credentials", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         credentials: "include",
@@ -34,21 +36,30 @@ export default function LoginPage() {
           json: "true",
         }).toString(),
       });
+      console.log("[LOGIN] Login response status:", loginRes.status, loginRes.type);
 
       // Step 3: Check session
       const sessionRes = await fetch("/api/auth/session", { credentials: "include" });
       const session = await sessionRes.json();
       const role = (session?.user as any)?.role;
+      console.log("[LOGIN] Session role:", role);
 
       if (role === "SUPER_ADMIN") {
         window.location.replace("/superadmin");
       } else if (role) {
         window.location.replace("/dashboard");
       } else {
-        setError("Barua pepe au nywila si sahihi.");
+        // Check if login response had error
+        const url = loginRes.url || "";
+        if (url.includes("error=")) {
+          setError("Barua pepe au nywila si sahihi.");
+        } else {
+          setError("Imeshindwa kuingia. Angalia barua pepe na nywila.");
+        }
       }
-    } catch {
-      setError("Hitilafu imetokea. Jaribu tena.");
+    } catch (err: any) {
+      console.error("[LOGIN] Error:", err);
+      setError("Hitilafu imetokea: " + (err?.message || "Jaribu tena."));
     } finally {
       setLoading(false);
     }
