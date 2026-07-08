@@ -18,10 +18,22 @@ export default function LoginPage() {
     setError("");
     try {
       const result = await signIn("credentials", { email, password, redirect: false });
-      if (result?.error) {
+      if (!result) {
+        setError("Hitilafu ya seva. Jaribu tena.");
+      } else if (result.error) {
         setError(result.error === "TENANT_SUSPENDED" ? "Akaunti yako imesimamishwa. Wasiliana na msaada." : "Barua pepe au nywila si sahihi.");
+      } else if (!result.ok) {
+        setError("Imeshindwa kuingia. Angalia barua pepe na nywila.");
       } else {
-        router.push("/dashboard");
+        // Fetch session to determine role for redirect
+        const { getSession } = await import("next-auth/react");
+        const session = await getSession();
+        const role = (session?.user as any)?.role;
+        if (role === "SUPER_ADMIN") {
+          router.push("/superadmin");
+        } else {
+          router.push("/dashboard");
+        }
         router.refresh();
       }
     } catch {
