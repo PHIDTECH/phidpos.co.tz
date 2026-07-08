@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "postbuild": "cp -r node_modules/.prisma .next/standalone/node_modules/.prisma && cp -r node_modules/@prisma/client .next/standalone/node_modules/@prisma/client",
+    "start": "node .next/standalone/server.js",
     "lint": "next lint",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
