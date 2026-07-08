@@ -97,11 +97,12 @@ async function main() {
   console.log("✅ Plans created");
 
   // Create Super Admin
+  // Remove old superadmin if exists with different email
+  await prisma.user.deleteMany({ where: { role: UserRole.SUPER_ADMIN } });
+
   const superAdminPassword = await bcrypt.hash("Phidtech@@2023", 12);
-  const superAdmin = await prisma.user.upsert({
-    where: { email: "phidtechnology@gmail.com" },
-    update: {},
-    create: {
+  const superAdmin = await prisma.user.create({
+    data: {
       name: "Super Admin",
       email: "phidtechnology@gmail.com",
       password: superAdminPassword,
@@ -158,12 +159,13 @@ async function main() {
   });
 
   // Create Demo Admin
+  // Remove old tenant admin if exists
+  await prisma.user.deleteMany({ where: { role: UserRole.TENANT_ADMIN, tenantId: demoTenant.id } });
+
   const adminPassword = await bcrypt.hash("Phidtech@@2023", 12);
-  await prisma.user.upsert({
-    where: { email: "bagokap.8275@gmail.com" },
-    update: {},
-    create: {
-      name: "Demo Admin",
+  await prisma.user.create({
+    data: {
+      name: "Admin",
       email: "bagokap.8275@gmail.com",
       password: adminPassword,
       role: UserRole.TENANT_ADMIN,
