@@ -318,51 +318,54 @@ export default function POSPage() {
     searchBar:  { background:"#fff", borderBottom:"1px solid #e5e7eb", padding:"12px 16px", display:"flex", alignItems:"center", gap:10 },
     searchWrap: { flex:1, position:"relative" },
     searchIcon: { position:"absolute", left:10, top:"50%", transform:"translateY(-50%)", color:"#9ca3af", fontSize:14 },
-    searchInput:{ width:"100%", paddingLeft:32, paddingRight:12, paddingTop:9, paddingBottom:9, border:"1px solid #e5e7eb", borderRadius:10, fontSize:13, outline:"none", boxSizing:"border-box" as const },
-    statusBadge:(online: boolean) => ({ display:"flex", alignItems:"center", gap:5, fontSize:12, fontWeight:600, padding:"6px 12px", borderRadius:8, border:`1px solid ${online?"#bbf7d0":"#fecaca"}`, background:online?"#f0fdf4":"#fef2f2", color:online?"#16a34a":"#dc2626", whiteSpace:"nowrap" as const }),
-    syncBtn:    { display:"flex", alignItems:"center", gap:5, fontSize:12, fontWeight:600, padding:"6px 12px", borderRadius:8, border:"1px solid #fed7aa", background:"#fff7ed", color:"#c2410c", cursor:"pointer", whiteSpace:"nowrap" as const },
-    grid:       { flex:1, overflowY:"auto" as const, padding:16 },
+    searchInput:{ width:"100%", paddingLeft:32, paddingRight:12, paddingTop:9, paddingBottom:9, border:"1px solid #e5e7eb", borderRadius:10, fontSize:13, outline:"none", boxSizing:"border-box" },
+    syncBtn:    { display:"flex", alignItems:"center", gap:5, fontSize:12, fontWeight:600, padding:"6px 12px", borderRadius:8, border:"1px solid #fed7aa", background:"#fff7ed", color:"#c2410c", cursor:"pointer", whiteSpace:"nowrap" },
+    grid:       { flex:1, overflowY:"auto", padding:16 },
     gridInner:  { display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))", gap:12 },
-    prodCard:   (disabled: boolean) => ({ background:"#fff", border:"1px solid #e5e7eb", borderRadius:12, padding:12, textAlign:"left" as const, cursor:disabled?"not-allowed":"pointer", opacity:disabled?0.5:1, transition:"box-shadow 0.15s,border-color 0.15s" }),
     prodImg:    { width:"100%", height:56, background:"linear-gradient(135deg,#eff6ff,#eef2ff)", borderRadius:8, marginBottom:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22 },
-    prodName:   { fontSize:12, fontWeight:700, color:"#111", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" as const, marginBottom:2 },
+    prodName:   { fontSize:12, fontWeight:700, color:"#111", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", marginBottom:2 },
     prodPrice:  { fontSize:13, fontWeight:800, color:"#2563eb" },
-    prodStock:  (low: boolean) => ({ fontSize:11, color:low?"#ef4444":"#9ca3af", marginTop:2 }),
-    emptyGrid:  { gridColumn:"1/-1", textAlign:"center" as const, padding:"48px 0", color:"#d1d5db" },
-    right:      { width:360, display:"flex", flexDirection:"column" as const, background:"#fff", borderLeft:"1px solid #e5e7eb", boxShadow:"-2px 0 8px rgba(0,0,0,0.04)" },
+    emptyGrid:  { gridColumn:"1/-1", textAlign:"center", padding:"48px 0", color:"#d1d5db" },
+    right:      { width:360, display:"flex", flexDirection:"column", background:"#fff", borderLeft:"1px solid #e5e7eb", boxShadow:"-2px 0 8px rgba(0,0,0,0.04)" },
     cartHdr:    { padding:"12px 16px", borderBottom:"1px solid #e5e7eb", display:"flex", alignItems:"center", justifyContent:"space-between" },
     cartTitle:  { fontWeight:800, fontSize:15, color:"#111", display:"flex", alignItems:"center", gap:8 },
     cartBadge:  { background:"#2563eb", color:"#fff", borderRadius:"50%", width:20, height:20, fontSize:11, fontWeight:800, display:"flex", alignItems:"center", justifyContent:"center" },
     clearBtn:   { fontSize:12, color:"#ef4444", background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", gap:4, fontWeight:600 },
-    custWrap:   { padding:"10px 16px", borderBottom:"1px solid #e5e7eb", position:"relative" as const },
-    custInp:    { width:"100%", paddingLeft:32, paddingRight:12, paddingTop:8, paddingBottom:8, border:"1px solid #e5e7eb", borderRadius:10, fontSize:13, outline:"none", boxSizing:"border-box" as const },
-    custDrop:   { position:"absolute" as const, left:16, right:16, top:46, background:"#fff", border:"1px solid #e5e7eb", borderRadius:10, boxShadow:"0 8px 24px rgba(0,0,0,0.12)", zIndex:10, overflow:"hidden" },
-    custRow:    { width:"100%", textAlign:"left" as const, padding:"10px 14px", fontSize:13, borderBottom:"1px solid #f3f4f6", background:"none", border:"none", cursor:"pointer" },
-    cartList:   { flex:1, overflowY:"auto" as const },
-    emptyCart:  { display:"flex", flexDirection:"column" as const, alignItems:"center", justifyContent:"center", height:"100%", color:"#d1d5db" },
+    custWrap:   { padding:"10px 16px", borderBottom:"1px solid #e5e7eb", position:"relative" },
+    custInp:    { width:"100%", paddingLeft:32, paddingRight:12, paddingTop:8, paddingBottom:8, border:"1px solid #e5e7eb", borderRadius:10, fontSize:13, outline:"none", boxSizing:"border-box" },
+    custDrop:   { position:"absolute", left:16, right:16, top:46, background:"#fff", border:"1px solid #e5e7eb", borderRadius:10, boxShadow:"0 8px 24px rgba(0,0,0,0.12)", zIndex:10, overflow:"hidden" },
+    custRow:    { width:"100%", textAlign:"left", padding:"10px 14px", fontSize:13, background:"none", border:"none", cursor:"pointer" },
+    cartList:   { flex:1, overflowY:"auto" },
+    emptyCart:  { display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", height:"100%", color:"#d1d5db" },
     cartItem:   { padding:"10px 16px", borderBottom:"1px solid #f3f4f6" },
     qtyBtn:     { width:26, height:26, borderRadius:"50%", border:"1px solid #e5e7eb", background:"#fff", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:700 },
     cartFooter: { borderTop:"1px solid #e5e7eb", background:"#f9fafb", padding:16 },
     totRow:     { display:"flex", justifyContent:"space-between", fontSize:13, color:"#6b7280", marginBottom:6 },
     totFinal:   { display:"flex", justifyContent:"space-between", fontSize:16, fontWeight:800, color:"#111", paddingTop:8, borderTop:"1px solid #e5e7eb", marginBottom:14 },
-    chargeBtn:  (empty: boolean) => ({ width:"100%", background:empty?"#d1d5db":"#2563eb", color:"#fff", border:"none", borderRadius:12, padding:"13px 0", fontSize:15, fontWeight:800, cursor:empty?"not-allowed":"pointer" }),
-    overlay:    { position:"fixed" as const, inset:0, background:"rgba(0,0,0,0.6)", zIndex:50, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
+    overlay:    { position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", zIndex:50, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
     modal:      { background:"#fff", borderRadius:20, width:"100%", maxWidth:420, boxShadow:"0 24px 64px rgba(0,0,0,0.2)" },
     modalHdr:   { padding:"18px 20px", borderBottom:"1px solid #e5e7eb", display:"flex", alignItems:"center", justifyContent:"space-between" },
     modalTitle: { fontSize:16, fontWeight:800, color:"#111" },
     closeBtn:   { background:"none", border:"none", fontSize:20, cursor:"pointer", color:"#9ca3af", lineHeight:1 },
     modalBody:  { padding:20 },
-    amtBox:     { background:"#eff6ff", borderRadius:14, padding:"16px 20px", textAlign:"center" as const, marginBottom:16 },
+    amtBox:     { background:"#eff6ff", borderRadius:14, padding:"16px 20px", textAlign:"center", marginBottom:16 },
     pmGrid:     { display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, marginTop:8 },
-    pmBtn:      (active: boolean) => ({ display:"flex", flexDirection:"column" as const, alignItems:"center", gap:4, padding:"12px 4px", borderRadius:12, border:`2px solid ${active?"#2563eb":"#e5e7eb"}`, background:active?"#eff6ff":"#fff", color:active?"#2563eb":"#6b7280", cursor:"pointer", fontSize:11, fontWeight:600 }),
     qkGrid:     { display:"flex", gap:6, marginTop:8 },
     qkBtn:      { flex:1, padding:"7px 4px", background:"#f3f4f6", border:"none", borderRadius:8, fontSize:11, fontWeight:600, cursor:"pointer" },
-    changePill: (pos: boolean) => ({ display:"flex", justifyContent:"space-between", padding:"10px 14px", borderRadius:10, background:pos?"#f0fdf4":"#fef2f2", color:pos?"#16a34a":"#dc2626", fontWeight:700, fontSize:13, marginTop:8 }),
     modalFtr:   { padding:"14px 20px", borderTop:"1px solid #e5e7eb", display:"flex", gap:10 },
     cancelBtn:  { flex:1, padding:"11px 0", borderRadius:12, border:"1px solid #e5e7eb", background:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", color:"#374151" },
-    confirmBtn: (dis: boolean) => ({ flex:1, padding:"11px 0", borderRadius:12, border:"none", background:dis?"#d1d5db":"#2563eb", color:"#fff", fontSize:14, fontWeight:700, cursor:dis?"not-allowed":"pointer" }),
     receiptMdl: { background:"#fff", borderRadius:20, width:"100%", maxWidth:360, boxShadow:"0 24px 64px rgba(0,0,0,0.2)" },
     receiptBody:{ padding:20, fontFamily:"monospace", fontSize:12 },
+  };
+
+  const dynS = {
+    statusBadge: (online: boolean): React.CSSProperties => ({ display:"flex", alignItems:"center", gap:5, fontSize:12, fontWeight:600, padding:"6px 12px", borderRadius:8, border:`1px solid ${online?"#bbf7d0":"#fecaca"}`, background:online?"#f0fdf4":"#fef2f2", color:online?"#16a34a":"#dc2626", whiteSpace:"nowrap" }),
+    prodCard:    (disabled: boolean): React.CSSProperties => ({ background:"#fff", border:"1px solid #e5e7eb", borderRadius:12, padding:12, textAlign:"left", cursor:disabled?"not-allowed":"pointer", opacity:disabled?0.5:1, transition:"box-shadow 0.15s,border-color 0.15s" }),
+    prodStock:   (low: boolean): React.CSSProperties => ({ fontSize:11, color:low?"#ef4444":"#9ca3af", marginTop:2 }),
+    chargeBtn:   (empty: boolean): React.CSSProperties => ({ width:"100%", background:empty?"#d1d5db":"#2563eb", color:"#fff", border:"none", borderRadius:12, padding:"13px 0", fontSize:15, fontWeight:800, cursor:empty?"not-allowed":"pointer" }),
+    pmBtn:       (active: boolean): React.CSSProperties => ({ display:"flex", flexDirection:"column", alignItems:"center", gap:4, padding:"12px 4px", borderRadius:12, border:`2px solid ${active?"#2563eb":"#e5e7eb"}`, background:active?"#eff6ff":"#fff", color:active?"#2563eb":"#6b7280", cursor:"pointer", fontSize:11, fontWeight:600 }),
+    changePill:  (pos: boolean): React.CSSProperties => ({ display:"flex", justifyContent:"space-between", padding:"10px 14px", borderRadius:10, background:pos?"#f0fdf4":"#fef2f2", color:pos?"#16a34a":"#dc2626", fontWeight:700, fontSize:13, marginTop:8 }),
+    confirmBtn:  (dis: boolean): React.CSSProperties => ({ flex:1, padding:"11px 0", borderRadius:12, border:"none", background:dis?"#d1d5db":"#2563eb", color:"#fff", fontSize:14, fontWeight:700, cursor:dis?"not-allowed":"pointer" }),
   };
 
   return (
@@ -383,7 +386,7 @@ export default function POSPage() {
               style={S.searchInput}
             />
           </div>
-          <div style={S.statusBadge(isOnline)}>
+          <div style={dynS.statusBadge(isOnline)}>
             {isOnline ? "🟢 Mtandaoni" : "🔴 Nje ya mtandao"}
           </div>
           {offlineCount > 0 && (
@@ -405,12 +408,12 @@ export default function POSPage() {
                   key={product.id}
                   onClick={() => addToCart(product)}
                   disabled={stock <= 0}
-                  style={S.prodCard(stock <= 0)}
+                  style={dynS.prodCard(stock <= 0)}
                 >
                   <div style={S.prodImg}>🛍️</div>
                   <div style={S.prodName}>{product.name}</div>
                   <div style={S.prodPrice}>{formatCurrency(price, "TZS")}</div>
-                  <div style={S.prodStock(stock <= 5)}>Hifadhi: {stock}</div>
+                  <div style={dynS.prodStock(stock <= 5)}>Hifadhi: {stock}</div>
                 </button>
               );
             })}
@@ -517,7 +520,7 @@ export default function POSPage() {
           <div style={S.totRow}><span>Jumla ndogo</span><span>{formatCurrency(subtotal,"TZS")}</span></div>
           {discount > 0 && <div style={{...S.totRow,color:"#16a34a"}}><span>Punguzo</span><span>− {formatCurrency(discount,"TZS")}</span></div>}
           <div style={S.totFinal}><span>JUMLA</span><span>{formatCurrency(total,"TZS")}</span></div>
-          <button onClick={() => setShowPaymentModal(true)} disabled={cart.length===0} style={S.chargeBtn(cart.length===0)}>
+          <button onClick={() => setShowPaymentModal(true)} disabled={cart.length===0} style={dynS.chargeBtn(cart.length===0)}>
             Lipia {formatCurrency(total,"TZS")}
           </button>
         </div>
@@ -540,7 +543,7 @@ export default function POSPage() {
               <div style={{fontSize:13,fontWeight:700,color:"#374151",marginBottom:6}}>Njia ya Malipo</div>
               <div style={S.pmGrid}>
                 {paymentMethods.map(pm => (
-                  <button key={pm.value} onClick={() => setPaymentMethod(pm.value as any)} style={S.pmBtn(paymentMethod===pm.value)}>
+                  <button key={pm.value} onClick={() => setPaymentMethod(pm.value as any)} style={dynS.pmBtn(paymentMethod===pm.value)}>
                     <span style={{fontSize:20}}>{pm.value==="CASH"?"💵":pm.value==="MOBILE_MONEY"?"📱":pm.value==="BANK_TRANSFER"?"🏦":"📋"}</span>
                     {pm.label}
                   </button>
@@ -565,7 +568,7 @@ export default function POSPage() {
                 </div>
               )}
               {paymentMethod!=="CREDIT" && parseFloat(amountPaid||"0")>0 && (
-                <div style={S.changePill(change>=0)}>
+                <div style={dynS.changePill(change>=0)}>
                   <span>{change>=0?"Chenji":"Baki"}</span>
                   <span>{formatCurrency(Math.abs(change),"TZS")}</span>
                 </div>
@@ -578,7 +581,7 @@ export default function POSPage() {
             </div>
             <div style={S.modalFtr}>
               <button onClick={()=>setShowPaymentModal(false)} style={S.cancelBtn}>Ghairi</button>
-              <button onClick={completeSale} disabled={processing||(paymentMethod==="CREDIT"&&!customer)} style={S.confirmBtn(processing||(paymentMethod==="CREDIT"&&!customer))}>
+              <button onClick={completeSale} disabled={processing||(paymentMethod==="CREDIT"&&!customer)} style={dynS.confirmBtn(processing||(paymentMethod==="CREDIT"&&!customer))}>
                 {processing?"Inashughulikiwa…":"Kamilisha Mauzo"}
               </button>
             </div>
@@ -617,7 +620,7 @@ export default function POSPage() {
             </div>
             <div style={{padding:"12px 16px",borderTop:"1px solid #e5e7eb",display:"flex",gap:8}}>
               <button onClick={()=>window.print()} style={{...S.cancelBtn,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>🖨 Chapa</button>
-              <button onClick={()=>setShowReceipt(false)} style={{...S.confirmBtn(false),border:"none"}}>Mauzo Mapya</button>
+              <button onClick={()=>setShowReceipt(false)} style={{...dynS.confirmBtn(false),border:"none"}}>Mauzo Mapya</button>
             </div>
           </div>
         </div>
