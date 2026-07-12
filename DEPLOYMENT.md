@@ -187,27 +187,82 @@ ufw enable
 
 ---
 
-## Step 9: (Optional) Add SSL with Let's Encrypt
+## Step 9: Install SSL Certificate (Let's Encrypt)
 
-Once your domain `phidpos.co.tz` points to `209.97.191.239`:
+> **Prerequisite:** DNS for `phidpos.co.tz` and `www.phidpos.co.tz` must point to `209.97.191.239` before running certbot.
+
+### 9a. Install certbot
 
 ```bash
 apt-get install -y certbot python3-certbot-nginx
-certbot --nginx -d phidpos.co.tz -d www.phidpos.co.tz --non-interactive --agree-tos -m admin@phidpos.co.tz
 ```
 
-Then update `.env`:
-```env
-NEXTAUTH_URL="https://phidpos.co.tz"
-NEXT_PUBLIC_APP_URL="https://phidpos.co.tz"
-```
+### 9b. Obtain certificate (runs automatically during `deploy.sh`)
 
-Rebuild:
 ```bash
-cd /var/www/phidpos
+certbot --nginx \
+  -d phidpos.co.tz \
+  -d www.phidpos.co.tz \
+  --non-interactive \
+  --agree-tos \
+  -m admin@phidpos.co.tz \
+  --redirect
+```
+
+The `--redirect` flag makes certbot:
+- Obtain the certificate
+- Update the Nginx config with SSL
+- Add an HTTP → HTTPS redirect automatically
+
+### 9c. Update environment variables
+
+```bash
+cd /var/www/phidpos.co.tz
+nano .env
+```
+
+Change these two lines:
+```env
+NEXTAUTH_URL="https://www.phidpos.co.tz"
+NEXT_PUBLIC_APP_URL="https://www.phidpos.co.tz"
+```
+
+### 9d. Rebuild app with HTTPS URLs
+
+```bash
+cd /var/www/phidpos.co.tz
 docker compose down
 docker compose up -d --build
+nginx -t && systemctl reload nginx
 ```
+
+### 9e. Verify SSL
+
+```bash
+# Check certificate details
+certbot certificates
+
+# Test HTTPS
+curl -I https://www.phidpos.co.tz
+```
+
+### 9f. Auto-renewal
+
+Certbot installs a systemd timer that renews certificates automatically. Verify it is active:
+
+```bash
+systemctl status certbot.timer
+# OR check cron fallback:
+crontab -l | grep certbot
+```
+
+To manually trigger renewal:
+```bash
+certbot renew --nginx --dry-run   # test
+certbot renew --nginx             # actual renewal
+```
+
+Certificates expire every **90 days**; auto-renewal runs at 03:00 daily and only renews when < 30 days remain.
 
 ---
 

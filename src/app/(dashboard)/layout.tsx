@@ -13,12 +13,10 @@ type NavItem = { href: string; key: string; icon: string; color: string; bg: str
 
 const navItems: NavItem[] = [
   { href: "/dashboard",       key: "dashboard",   icon: "📊", color: "#2563eb", bg: "#eff6ff", roles: ["SUPER_ADMIN","TENANT_ADMIN","STORE_MANAGER","CASHIER","ACCOUNTANT"] },
-  { href: "/superadmin",      key: "superadmin",  icon: "⚡", color: "#f59e0b", bg: "#fffbeb", roles: ["SUPER_ADMIN"],
+  { href: "/superadmin",  key: "user_mgmt", icon: "👥", color: "#7c3aed", bg: "#f5f3ff", roles: ["SUPER_ADMIN"],
     sub: [
-      { href: "/superadmin",          key: "sa_dashboard" },
       { href: "/superadmin/users",    key: "sa_users" },
       { href: "/superadmin/tenants",  key: "sa_tenants" },
-      { href: "/superadmin/messages", key: "sa_messages" },
     ]
   },
   { href: "/pos",             key: "pos",         icon: "🛒", color: "#16a34a", bg: "#f0fdf4", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"] },
@@ -287,16 +285,15 @@ const styles = `
 `;
 
 const subLabels: Record<string,string> = {
-  sa_dashboard: "Admin Dashboard",
-  sa_users:     "All Users",
+  sa_users:     "Users",
   sa_tenants:   "Tenants",
-  sa_messages:  "Messages",
   all_staff:    "All Staff",
   all_roles:    "All Roles",
 };
 
 const mainLabels: Record<string,string> = {
-  superadmin:  "User Management",
+  user_mgmt:   "User Management",
+  superadmin:  "Super Admin",
   staff_roles: "Staff & Roles",
   messages:    "Messages",
   dashboard:   "Dashboard",
@@ -316,7 +313,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const session = sessionData?.data;
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [expandedKeys, setExpandedKeys] = useState<Record<string,boolean>>({superadmin:true,staff_roles:true});
+  const [expandedKeys, setExpandedKeys] = useState<Record<string,boolean>>({user_mgmt:true,staff_roles:true});
   const { lang, t, setLang } = useLang();
   const role = (session?.user as any)?.role;
   const filteredNav = navItems.filter((item) => !role || item.roles.includes(role));

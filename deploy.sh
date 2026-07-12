@@ -139,12 +139,54 @@ ufw allow 80/tcp    # HTTP
 ufw allow 443/tcp   # HTTPS
 ufw --force enable
 
+# ---- 12. Install SSL Certificate (Let's Encrypt / Certbot) ----
+echo "🔐 Installing SSL certificate..."
+
+# Install certbot if not present
+if ! command -v certbot &> /dev/null; then
+  echo "📦 Installing certbot..."
+  apt-get install -y certbot python3-certbot-nginx
+  echo "✅ certbot installed"
+else
+  echo "✅ certbot already installed"
+fi
+
+# Check if certificate already exists
+if [ -d "/etc/letsencrypt/live/phidpos.co.tz" ]; then
+  echo "✅ SSL certificate already exists — renewing if needed..."
+  certbot renew --quiet --nginx
+else
+  echo "🔐 Obtaining new SSL certificate..."
+  certbot --nginx \
+    -d phidpos.co.tz \
+    -d www.phidpos.co.tz \
+    --non-interactive \
+    --agree-tos \
+    -m admin@phidpos.co.tz \
+    --redirect
+  echo "✅ SSL certificate installed"
+fi
+
+# Update .env with HTTPS URLs after cert is issued
+sed -i 's|NEXTAUTH_URL=.*|NEXTAUTH_URL="https://www.phidpos.co.tz"|' "$APP_DIR/.env"
+sed -i 's|NEXT_PUBLIC_APP_URL=.*|NEXT_PUBLIC_APP_URL="https://www.phidpos.co.tz"|' "$APP_DIR/.env"
+
+# Reload nginx with new SSL config
+nginx -t && systemctl reload nginx
+
+# Enable certbot auto-renewal (runs twice daily via cron)
+systemctl enable certbot.timer 2>/dev/null || \
+  (crontab -l 2>/dev/null; echo "0 3 * * * certbot renew --quiet --nginx") | crontab -
+
+echo "✅ SSL auto-renewal configured"
+
 echo ""
 echo "=================================================="
 echo "✅ Deployment complete!"
 echo "=================================================="
 echo ""
 echo "🌐 App is running at: https://www.phidpos.co.tz"
+echo "🔐 SSL:               Let's Encrypt (auto-renews)"
 echo ""
 echo "📋 Demo Login Credentials:"
 echo "   Super Admin:  superadmin@phidpos.co.tz / Admin@1234"
@@ -155,4 +197,6 @@ echo "🔧 Useful commands:"
 echo "   View logs:     docker compose -f $APP_DIR/docker-compose.yml logs -f app"
 echo "   Restart app:   docker compose -f $APP_DIR/docker-compose.yml restart app"
 echo "   DB shell:      docker compose -f $APP_DIR/docker-compose.yml exec postgres psql -U phidpos"
+echo "   Renew SSL:     certbot renew --nginx"
+echo "   SSL status:    certbot certificates"
 echo ""

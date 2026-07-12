@@ -85,7 +85,7 @@ export default function SuperAdminTenantsPage() {
 
   return (
     <div style={S.page}>
-      <h1 style={S.h1}>🏢 Tenant Management</h1>
+      <h1 style={S.h1}>Tenant Management</h1>
       <p style={S.sub}>Manage all tenants across the system</p>
 
       {loading ? (
