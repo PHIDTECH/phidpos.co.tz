@@ -286,12 +286,12 @@ export default function Home() {
             <div className="plan-name">Starter</div>
             <div className="plan-trial">Jaribio la siku 14 bure</div>
             <div className="plan-price">
-              <span className="amount">TZS 29,000</span><br/>
+              <span className="amount">TZS 30,000</span><br/>
               <span className="period">/mwezi</span>
             </div>
-            <div className="plan-tagline">Hadi watumiaji 2 · Duka 1</div>
+            <div className="plan-tagline">Lipa miezi 12 · Hadi watumiaji 2 · Duka 1</div>
             <ul className="plan-features">
-              {["✓ Mauzo ya POS","✓ Usimamizi wa Bidhaa","✓ Ripoti za Msingi","✓ Wateja 100","✗ Wasambazaji","✗ Uhasibu","✗ Maduka Mengi","✗ Manunuzi"].map((f,i)=>(
+              {["✓ Mauzo ya POS","✓ Usimamizi wa Bidhaa","✓ Ripoti za Msingi","✓ Wateja 100","✓ Selcom / M-Pesa","✗ Wasambazaji","✗ Uhasibu","✗ Maduka Mengi"].map((f,i)=>(
                 <li key={i}><span className={f.startsWith("✓") ? "check" : "cross"}>{f[0]}</span>{f.slice(2)}</li>
               ))}
             </ul>
@@ -304,10 +304,10 @@ export default function Home() {
             <div className="plan-name">Business</div>
             <div className="plan-trial">Jaribio la siku 14 bure</div>
             <div className="plan-price">
-              <span className="amount">TZS 79,000</span><br/>
+              <span className="amount">TZS 50,000</span><br/>
               <span className="period">/mwezi</span>
             </div>
-            <div className="plan-tagline">Hadi watumiaji 5 · Maduka 2</div>
+            <div className="plan-tagline">Lipa miezi 3 · Hadi watumiaji 5 · Maduka 2</div>
             <ul className="plan-features">
               {["✓ Mauzo ya POS","✓ Usimamizi wa Bidhaa","✓ Ripoti za Kina","✓ Wateja Wasio na Kikomo","✓ Wasambazaji","✓ Manunuzi","✓ Maduka 2","✗ Uhasibu wa Kina"].map((f,i)=>(
                 <li key={i}><span className={f.startsWith("✓") ? "check" : "cross"}>{f[0]}</span>{f.slice(2)}</li>
@@ -321,10 +321,10 @@ export default function Home() {
             <div className="plan-name">Professional</div>
             <div className="plan-trial">Jaribio la siku 14 bure</div>
             <div className="plan-price">
-              <span className="amount">TZS 149,000</span><br/>
+              <span className="amount">TZS 70,000</span><br/>
               <span className="period">/mwezi</span>
             </div>
-            <div className="plan-tagline">Watumiaji wasio na kikomo · Maduka yote</div>
+            <div className="plan-tagline">Lipa kila mwezi · Watumiaji wasio na kikomo · Maduka yote</div>
             <ul className="plan-features">
               {["✓ Mauzo ya POS","✓ Usimamizi wa Bidhaa","✓ Ripoti Zote","✓ Wateja Wasio na Kikomo","✓ Wasambazaji","✓ Uhasibu Kamili","✓ Maduka Mengi","✓ SMS & Barua Pepe"].map((f,i)=>(
                 <li key={i}><span className={f.startsWith("✓") ? "check" : "cross"}>{f[0]}</span>{f.slice(2)}</li>

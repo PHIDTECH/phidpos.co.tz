@@ -15,8 +15,10 @@ const navItems: NavItem[] = [
   { href: "/dashboard",       key: "dashboard",   icon: "📊", color: "#2563eb", bg: "#eff6ff", roles: ["SUPER_ADMIN","TENANT_ADMIN","STORE_MANAGER","CASHIER","ACCOUNTANT"] },
   { href: "/superadmin",  key: "user_mgmt", icon: "👥", color: "#7c3aed", bg: "#f5f3ff", roles: ["SUPER_ADMIN"],
     sub: [
-      { href: "/superadmin/users",    key: "sa_users" },
-      { href: "/superadmin/tenants",  key: "sa_tenants" },
+      { href: "/superadmin/users",     key: "sa_users" },
+      { href: "/superadmin/tenants",   key: "sa_tenants" },
+      { href: "/superadmin/accounts",  key: "sa_accounts" },
+      { href: "/superadmin/settings",  key: "sa_settings" },
     ]
   },
   { href: "/pos",             key: "pos",         icon: "🛒", color: "#16a34a", bg: "#f0fdf4", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"] },
@@ -35,6 +37,7 @@ const navItems: NavItem[] = [
   },
   { href: "/messages",        key: "messages",    icon: "💬", color: "#7c3aed", bg: "#f5f3ff", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
   { href: "/settings",        key: "settings",    icon: "⚙️", color: "#374151", bg: "#f9fafb", roles: ["TENANT_ADMIN"] },
+  { href: "/subscription",     key: "subscription", icon: "💳", color: "#0891b2", bg: "#ecfeff", roles: ["TENANT_ADMIN"] },
 ];
 
 const styles = `
@@ -287,6 +290,8 @@ const styles = `
 const subLabels: Record<string,string> = {
   sa_users:     "Users",
   sa_tenants:   "Tenants",
+  sa_accounts:  "Accounts",
+  sa_settings:  "Settings",
   all_staff:    "All Staff",
   all_roles:    "All Roles",
 };
@@ -305,7 +310,8 @@ const mainLabels: Record<string,string> = {
   purchases:   "Purchases",
   accounting:  "Accounting",
   reports:     "Reports",
-  settings:    "Settings",
+  settings:     "Settings",
+  subscription: "Subscription",
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

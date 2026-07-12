@@ -1,191 +1,211 @@
 "use client";
-
 export const dynamic = "force-dynamic";
-
 import { useState, useEffect } from "react";
-import { CreditCard, Check, Zap, Star, Building2, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
-import { formatDate } from "@/lib/utils";
 
 const PLANS = [
   {
-    id: "FREE",
-    name: "Free Trial",
-    price: 0,
-    period: "forever",
-    color: "border-gray-200",
-    badge: "bg-gray-100 text-gray-700",
-    icon: Zap,
-    features: ["1 Store", "Up to 100 products", "Basic reports", "1 user", "No SMS"],
+    key: "STARTER", name: "Starter", price: 30000, billingMonths: 12,
+    billingLabel: "Lipa miezi 12 (kwa mwaka)", popular: false,
+    color: "#2563eb", bg: "#eff6ff",
+    features: ["Duka 1", "Watumiaji 2", "Mauzo ya POS", "Bidhaa", "Ripoti za Msingi", "Wateja 100"],
   },
   {
-    id: "BASIC",
-    name: "Basic",
-    price: 29000,
-    period: "month",
-    color: "border-blue-200",
-    badge: "bg-blue-100 text-blue-700",
-    icon: Star,
-    features: ["1 Store", "Unlimited products", "Full reports", "3 users", "100 SMS/month", "Offline POS"],
+    key: "BUSINESS", name: "Business", price: 50000, billingMonths: 3,
+    billingLabel: "Lipa miezi 3", popular: true,
+    color: "#7c3aed", bg: "#f5f3ff",
+    features: ["Maduka 2", "Watumiaji 5", "Mauzo ya POS", "Bidhaa", "Ripoti za Kina", "Wasambazaji", "Manunuzi"],
   },
   {
-    id: "PRO",
-    name: "Professional",
-    price: 79000,
-    period: "month",
-    color: "border-purple-200 ring-2 ring-purple-400",
-    badge: "bg-purple-100 text-purple-700",
-    icon: Building2,
-    popular: true,
-    features: ["3 Stores", "Unlimited products", "Advanced analytics", "10 users", "500 SMS/month", "Offline POS", "Priority support"],
-  },
-  {
-    id: "ENTERPRISE",
-    name: "Enterprise",
-    price: 199000,
-    period: "month",
-    color: "border-amber-200",
-    badge: "bg-amber-100 text-amber-700",
-    icon: Building2,
-    features: ["Unlimited stores", "Unlimited products", "Custom reports", "Unlimited users", "2000 SMS/month", "Dedicated support", "Custom integrations"],
+    key: "PROFESSIONAL", name: "Professional", price: 70000, billingMonths: 1,
+    billingLabel: "Lipa kila mwezi", popular: false,
+    color: "#059669", bg: "#ecfdf5",
+    features: ["Maduka yote", "Watumiaji wasio na kikomo", "Ripoti Zote", "Uhasibu Kamili", "SMS & Barua Pepe", "Priority Support"],
   },
 ];
 
 export default function SubscriptionPage() {
-  const sessionData = useSession(); const session = sessionData?.data;
+  const sessionData = useSession();
   const [subscription, setSubscription] = useState<any>(null);
+  const [plans, setPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [upgrading, setUpgrading] = useState<string | null>(null);
+  const [payModal, setPayModal] = useState<any>(null);
+  const [phone, setPhone] = useState("");
+  const [paying, setPaying] = useState(false);
 
-  useEffect(() => { loadSubscription(); }, []);
+  useEffect(() => { load(); }, []);
 
-  async function loadSubscription() {
+  async function load() {
     setLoading(true);
     try {
-      const res = await fetch("/api/subscription");
-      if (res.ok) { const data = await res.json(); setSubscription(data.subscription); }
+      const [sr, pr] = await Promise.all([
+        fetch("/api/subscription").then(r => r.json()),
+        fetch("/api/superadmin/plans").then(r => r.json()).catch(() => ({ plans: [] })),
+      ]);
+      setSubscription(sr.subscription || null);
+      setPlans(pr.plans || []);
     } catch {}
     setLoading(false);
   }
 
-  async function selectPlan(planId: string) {
-    setUpgrading(planId);
+  async function payWithSelcom() {
+    if (!phone || phone.length < 10) { toast.error("Weka namba ya simu sahihi"); return; }
+    if (!payModal) return;
+    setPaying(true);
     try {
-      const res = await fetch("/api/subscription", {
+      const dbPlan = plans.find((p: any) => p.type === payModal.key);
+      if (!dbPlan) { toast.error("Plan haipo. Wasiliana na msaada."); setPaying(false); return; }
+
+      const res = await fetch("/api/subscription/selcom-pay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId }),
+        body: JSON.stringify({
+          planId: dbPlan.id,
+          billingMonths: payModal.billingMonths,
+          phone,
+        }),
       });
-      if (!res.ok) throw new Error("Failed");
-      toast.success(`Switched to ${planId} plan`);
-      loadSubscription();
-    } catch { toast.error("Failed to update plan. Contact support."); }
-    setUpgrading(null);
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Imeshindwa");
+      toast.success("Ombi limetumwa! Angalia simu yako uweke PIN ili kuthibitisha malipo.");
+      setPayModal(null);
+      setPhone("");
+      setTimeout(load, 4000);
+    } catch (e: any) { toast.error(e.message || "Imeshindwa kulipa"); }
+    setPaying(false);
   }
 
-  const currentPlan = subscription?.plan || "FREE";
+  const S: Record<string, React.CSSProperties> = {
+    page:   { padding: 24, fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" },
+    h1:     { fontSize: 22, fontWeight: 800, color: "#111", margin: 0 },
+    sub:    { fontSize: 13, color: "#6b7280", marginTop: 4, marginBottom: 24 },
+    banner: { background: "linear-gradient(135deg,#2563eb,#4f46e5)", borderRadius: 16, padding: "20px 24px", color: "#fff", marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" as const, gap: 12 },
+    grid:   { display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: 20 },
+    card:   { background: "#fff", border: "2px solid #e5e7eb", borderRadius: 16, padding: "24px 20px", display: "flex", flexDirection: "column" as const, position: "relative" as const, boxShadow: "0 2px 8px rgba(0,0,0,0.05)" },
+    overlay:{ position: "fixed" as const, inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 },
+    modal:  { background: "#fff", borderRadius: 18, width: "100%", maxWidth: 420, boxShadow: "0 20px 60px rgba(0,0,0,0.2)" },
+    mhdr:   { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid #e5e7eb" },
+    mbody:  { padding: 20 },
+    mftr:   { display: "flex", gap: 10, padding: "14px 20px", borderTop: "1px solid #e5e7eb" },
+    lbl:    { fontSize: 13, fontWeight: 700, color: "#374151", display: "block", marginBottom: 5 },
+    inp:    { width: "100%", padding: "10px 12px", border: "1px solid #e5e7eb", borderRadius: 10, fontSize: 13, outline: "none", boxSizing: "border-box" as const, marginBottom: 4 },
+    cancelB:{ flex: 1, padding: "10px 0", borderRadius: 12, border: "1px solid #e5e7eb", background: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", color: "#374151" },
+    payB:   { flex: 1, padding: "10px 0", borderRadius: 12, border: "none", background: "#16a34a", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" },
+  };
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Subscription & Plans</h1>
-        <p className="text-muted-foreground text-sm">Manage your subscription plan</p>
-      </div>
+    <div style={S.page}>
+      <h1 style={S.h1}>Subscription & Plans</h1>
+      <p style={S.sub}>Manage your subscription and pay via Selcom mobile money</p>
 
-      {/* Current Plan Status */}
-      {!loading && subscription && (
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-6 text-white">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-blue-100 text-sm">Current Plan</p>
-              <h2 className="text-3xl font-bold mt-1">{PLANS.find(p => p.id === currentPlan)?.name || currentPlan}</h2>
-              {subscription.expiresAt && (
-                <p className="text-blue-100 text-sm mt-2">Expires: {formatDate(subscription.expiresAt)}</p>
-              )}
-              <div className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
-                subscription.status === "ACTIVE" ? "bg-green-400/20 text-green-100" : "bg-red-400/20 text-red-100"
-              }`}>
-                <div className={`w-1.5 h-1.5 rounded-full ${subscription.status === "ACTIVE" ? "bg-green-300" : "bg-red-300"}`} />
-                {subscription.status}
-              </div>
+      {/* Current plan banner */}
+      {subscription && (
+        <div style={S.banner}>
+          <div>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>Current Plan</div>
+            <div style={{ fontSize: 22, fontWeight: 900 }}>{subscription.plan?.name || "—"}</div>
+            <div style={{ fontSize: 12, opacity: 0.75, marginTop: 4 }}>
+              Expires: {new Date(subscription.endDate).toLocaleDateString("en-GB")}
             </div>
-            <CreditCard className="w-12 h-12 text-blue-300" />
+          </div>
+          <div style={{ textAlign: "right" as const }}>
+            <span style={{ padding: "6px 14px", borderRadius: 20, fontSize: 12, fontWeight: 800, background: subscription.status === "ACTIVE" ? "rgba(74,222,128,0.2)" : "rgba(248,113,113,0.2)", color: subscription.status === "ACTIVE" ? "#86efac" : "#fca5a5" }}>
+              {subscription.status}
+            </span>
+            <div style={{ fontSize: 12, opacity: 0.8, marginTop: 8 }}>TZS {Number(subscription.amount).toLocaleString()} paid</div>
           </div>
         </div>
       )}
 
-      {/* Plans Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        {PLANS.map(plan => {
-          const Icon = plan.icon;
-          const isCurrent = currentPlan === plan.id;
-          return (
-            <div key={plan.id} className={`relative bg-card border-2 rounded-2xl p-5 flex flex-col ${plan.color}`}>
-              {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full">POPULAR</span>
-                </div>
-              )}
-              <div className="flex items-center gap-3 mb-4">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${plan.badge}`}>
-                  <Icon className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="font-bold">{plan.name}</p>
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${plan.badge}`}>{plan.id}</span>
-                </div>
-              </div>
-
-              <div className="mb-4">
-                {plan.price === 0 ? (
-                  <p className="text-3xl font-bold">Free</p>
-                ) : (
-                  <div>
-                    <span className="text-3xl font-bold">{plan.price.toLocaleString()}</span>
-                    <span className="text-sm text-muted-foreground"> TZS/{plan.period}</span>
+      {loading ? (
+        <div style={{ textAlign: "center", padding: "60px 0", color: "#9ca3af" }}>⏳ Inapakia…</div>
+      ) : (
+        <div style={S.grid}>
+          {PLANS.map(plan => {
+            const total = plan.price * plan.billingMonths;
+            const isCurrent = subscription?.plan?.name === plan.name || subscription?.plan?.type === plan.key;
+            return (
+              <div key={plan.key} style={{ ...S.card, borderColor: plan.popular ? plan.color : "#e5e7eb" }}>
+                {plan.popular && (
+                  <div style={{ position: "absolute", top: -14, left: "50%", transform: "translateX(-50%)", background: plan.color, color: "#fff", fontSize: 11, fontWeight: 800, padding: "4px 14px", borderRadius: 999 }}>
+                    Most Popular
                   </div>
                 )}
+                <div style={{ fontSize: 18, fontWeight: 900, color: "#111", marginBottom: 4 }}>{plan.name}</div>
+                <div style={{ fontSize: 12, color: plan.color, fontWeight: 600, marginBottom: 14 }}>{plan.billingLabel}</div>
+                <div style={{ marginBottom: 6 }}>
+                  <span style={{ fontSize: 30, fontWeight: 900, color: "#111" }}>TZS {plan.price.toLocaleString()}</span>
+                  <span style={{ fontSize: 13, color: "#6b7280" }}>/mwezi</span>
+                </div>
+                <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 18 }}>
+                  Jumla: <strong>TZS {total.toLocaleString()}</strong> kwa miezi {plan.billingMonths}
+                </div>
+                <ul style={{ listStyle: "none", padding: 0, margin: "0 0 20px", flex: 1 }}>
+                  {plan.features.map((f, i) => (
+                    <li key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#374151", padding: "5px 0", borderBottom: "1px solid #f9fafb" }}>
+                      <span style={{ color: "#16a34a", fontWeight: 900 }}>✓</span> {f}
+                    </li>
+                  ))}
+                </ul>
+                {isCurrent ? (
+                  <div style={{ textAlign: "center" as const, padding: "10px", borderRadius: 10, background: "#f0fdf4", color: "#16a34a", fontWeight: 700, fontSize: 13 }}>
+                    ✓ Mpango Wako wa Sasa
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setPayModal(plan)}
+                    style={{ padding: "12px", borderRadius: 10, border: "none", background: plan.color, color: "#fff", fontWeight: 700, fontSize: 14, cursor: "pointer", width: "100%" }}
+                  >
+                    Lipa na Selcom →
+                  </button>
+                )}
               </div>
+            );
+          })}
+        </div>
+      )}
 
-              <ul className="space-y-2 flex-1 mb-5">
-                {plan.features.map((f, i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-
-              <button
-                onClick={() => !isCurrent && selectPlan(plan.id)}
-                disabled={isCurrent || upgrading === plan.id}
-                className={`w-full py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-                  isCurrent
-                    ? "bg-green-100 text-green-700 cursor-default"
-                    : "bg-blue-600 hover:bg-blue-700 text-white"
-                }`}
-              >
-                {upgrading === plan.id && <Loader2 className="w-4 h-4 animate-spin" />}
-                {isCurrent ? "✓ Current Plan" : upgrading === plan.id ? "Switching…" : "Select Plan"}
+      {/* Payment Modal */}
+      {payModal && (
+        <div style={S.overlay}>
+          <div style={S.modal}>
+            <div style={S.mhdr}>
+              <span style={{ fontSize: 15, fontWeight: 800, color: "#111" }}>💳 Lipa kwa Selcom</span>
+              <button onClick={() => setPayModal(null)} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#9ca3af" }}>×</button>
+            </div>
+            <div style={S.mbody}>
+              <div style={{ background: "#f9fafb", borderRadius: 10, padding: "12px 16px", marginBottom: 16 }}>
+                <div style={{ fontSize: 13, color: "#6b7280" }}>Mpango</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: "#111" }}>{payModal.name}</div>
+                <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>{payModal.billingLabel}</div>
+                <div style={{ fontSize: 18, fontWeight: 900, color: "#2563eb", marginTop: 4 }}>
+                  TZS {(payModal.price * payModal.billingMonths).toLocaleString()}
+                </div>
+              </div>
+              <label style={S.lbl}>Namba ya Simu (Selcom/M-Pesa) *</label>
+              <input
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                placeholder="+255 7XX XXX XXX"
+                style={S.inp}
+              />
+              <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 16 }}>
+                Utapata ombi la USSD kwenye simu yako. Weka PIN yako ili kuthibitisha malipo.
+              </div>
+              <div style={{ fontSize: 12, color: "#9ca3af", background: "#f9fafb", borderRadius: 8, padding: "8px 12px" }}>
+                Inakubaliwa: Selcom, M-Pesa, Tigo Pesa, Airtel Money
+              </div>
+            </div>
+            <div style={S.mftr}>
+              <button onClick={() => setPayModal(null)} style={S.cancelB}>Ghairi</button>
+              <button onClick={payWithSelcom} disabled={paying} style={S.payB}>
+                {paying ? "Inatuma…" : "Tuma Ombi la Malipo"}
               </button>
             </div>
-          );
-        })}
-      </div>
-
-      {/* Billing Info */}
-      <div className="bg-card border rounded-xl p-5">
-        <h3 className="font-semibold mb-3">Billing Information</h3>
-        <p className="text-sm text-muted-foreground">
-          For billing inquiries, plan upgrades, or payment issues, please contact our support team at{" "}
-          <a href="mailto:billing@phidpos.co.tz" className="text-blue-600 underline">billing@phidpos.co.tz</a>{" "}
-          or call <span className="font-medium text-foreground">+255 XXX XXX XXX</span>.
-        </p>
-        <p className="text-sm text-muted-foreground mt-2">
-          Payments are accepted via M-Pesa, Tigo Pesa, Airtel Money, and bank transfer.
-        </p>
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
