@@ -28,6 +28,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
   if (body.storeId !== undefined) data.storeId = body.storeId || null;
   if (body.phone !== undefined) data.phone = body.phone || null;
   if (body.isActive !== undefined) data.isActive = body.isActive;
+  if (body.permissions !== undefined) data.permissions = body.permissions;
   if (body.password) data.password = await bcrypt.hash(body.password, 12);
 
   const user = await prisma.user.update({ where: { id }, data });

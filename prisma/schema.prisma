@@ -119,6 +119,9 @@ enum UserRole {
   STORE_MANAGER
   CASHIER
   ACCOUNTANT
+  GENERAL_MANAGER
+  PRODUCTION_MANAGER
+  HR_MANAGER
 }
 
 model User {
@@ -128,6 +131,7 @@ model User {
   password        String
   phone           String?
   role            UserRole   @default(CASHIER)
+  permissions     Json?      // Array of permission strings
   isActive        Boolean    @default(true)
   tenantId        String?
   tenant          Tenant?    @relation(fields: [tenantId], references: [id], onDelete: Cascade)

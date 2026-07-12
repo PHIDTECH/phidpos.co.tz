@@ -85,13 +85,14 @@ export default function SuperAdminUsersPage() {
   });
 
   const roleLabel: Record<string, string> = {
-    SUPER_ADMIN:   "Super_admin",
-    TENANT_ADMIN:  "Admin",
-    STORE_MANAGER: "Store Manager",
-    CASHIER:       "Cashier",
-    ACCOUNTANT:    "Accountant",
-    GENERAL_MANAGER: "General Manager",
-    LOAN_OFFICER:  "Loan Officer",
+    SUPER_ADMIN:        "Super Admin",
+    TENANT_ADMIN:       "Admin",
+    STORE_MANAGER:      "Store Manager",
+    CASHIER:            "Cashier",
+    ACCOUNTANT:         "Accountant",
+    GENERAL_MANAGER:    "General Manager",
+    PRODUCTION_MANAGER: "Production Manager",
+    HR_MANAGER:         "HR Manager",
   };
 
   const S: Record<string, React.CSSProperties> = {
@@ -249,6 +250,9 @@ export default function SuperAdminUsersPage() {
                 <option value="CASHIER">Cashier</option>
                 <option value="STORE_MANAGER">Store Manager</option>
                 <option value="ACCOUNTANT">Accountant</option>
+                <option value="GENERAL_MANAGER">General Manager</option>
+                <option value="PRODUCTION_MANAGER">Production Manager</option>
+                <option value="HR_MANAGER">HR Manager</option>
                 <option value="TENANT_ADMIN">Admin</option>
                 <option value="SUPER_ADMIN">Super Admin</option>
               </select>

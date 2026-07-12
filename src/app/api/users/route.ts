@@ -10,7 +10,7 @@ export async function GET() {
 
     const users = await prisma.user.findMany({
       where: { tenantId: (session?.user as any).tenantId },
-      select: { id: true, name: true, email: true, role: true, isActive: true, store: { select: { name: true } } },
+      select: { id: true, name: true, email: true, role: true, isActive: true, permissions: true, phone: true, storeId: true, store: { select: { id: true, name: true } } },
       orderBy: { name: "asc" },
     });
 
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { name, email, password, role, storeId } = await req.json();
+    const { name, email, password, role, storeId, phone, permissions } = await req.json();
     if (!name || !email || !password) return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
 
     const existing = await prisma.user.findUnique({ where: { email } });
@@ -43,6 +43,8 @@ export async function POST(req: NextRequest) {
         role: role || "CASHIER",
         tenantId: (session?.user as any).tenantId,
         storeId: storeId || undefined,
+        phone: phone || undefined,
+        permissions: permissions ?? [],
       },
     });
 

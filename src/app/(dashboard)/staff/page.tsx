@@ -3,6 +3,31 @@ export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 
+const ALL_PERMISSIONS = [
+  { key:"dashboard",   label:"Dashboard" },
+  { key:"pos",         label:"POS / Sales" },
+  { key:"products",    label:"Products" },
+  { key:"inventory",   label:"Inventory" },
+  { key:"customers",   label:"Customers" },
+  { key:"suppliers",   label:"Suppliers" },
+  { key:"purchases",   label:"Purchases" },
+  { key:"accounting",  label:"Accounting" },
+  { key:"reports",     label:"Reports" },
+  { key:"staff",       label:"Staff & Roles" },
+  { key:"messages",    label:"Messages" },
+  { key:"settings",    label:"Settings" },
+];
+
+const ROLE_DEFAULT_PERMISSIONS: Record<string,string[]> = {
+  TENANT_ADMIN:       ALL_PERMISSIONS.map(p=>p.key),
+  STORE_MANAGER:      ["dashboard","pos","products","inventory","customers","suppliers","purchases","reports","staff"],
+  CASHIER:            ["dashboard","pos","customers"],
+  ACCOUNTANT:         ["dashboard","accounting","reports","products"],
+  GENERAL_MANAGER:    ["dashboard","pos","products","inventory","customers","suppliers","purchases","accounting","reports","staff","messages"],
+  PRODUCTION_MANAGER: ["dashboard","products","inventory","purchases","reports"],
+  HR_MANAGER:         ["dashboard","staff","reports","messages"],
+};
+
 export default function StaffPage() {
   const [staff, setStaff] = useState<any[]>([]);
   const [stores, setStores] = useState<any[]>([]);
@@ -11,6 +36,7 @@ export default function StaffPage() {
   const [editing, setEditing] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ name:"", email:"", password:"", role:"CASHIER", storeId:"", phone:"" });
+  const [permissions, setPermissions] = useState<string[]>(ROLE_DEFAULT_PERMISSIONS["CASHIER"]);
 
   async function load() {
     setLoading(true);
@@ -27,8 +53,27 @@ export default function StaffPage() {
 
   useEffect(()=>{ load(); },[]);
 
-  function openAdd() { setEditing(null); setForm({name:"",email:"",password:"",role:"CASHIER",storeId:"",phone:""}); setShowModal(true); }
-  function openEdit(u: any) { setEditing(u); setForm({name:u.name,email:u.email,password:"",role:u.role,storeId:u.storeId||"",phone:u.phone||""}); setShowModal(true); }
+  function openAdd() {
+    setEditing(null);
+    setForm({name:"",email:"",password:"",role:"CASHIER",storeId:"",phone:""});
+    setPermissions(ROLE_DEFAULT_PERMISSIONS["CASHIER"]);
+    setShowModal(true);
+  }
+  function openEdit(u: any) {
+    setEditing(u);
+    setForm({name:u.name,email:u.email,password:"",role:u.role,storeId:u.storeId||"",phone:u.phone||""});
+    setPermissions(Array.isArray(u.permissions) ? u.permissions : (ROLE_DEFAULT_PERMISSIONS[u.role]||[]));
+    setShowModal(true);
+  }
+
+  function onRoleChange(role: string) {
+    setForm(p=>({...p,role}));
+    setPermissions(ROLE_DEFAULT_PERMISSIONS[role]||[]);
+  }
+
+  function togglePerm(key: string) {
+    setPermissions(p => p.includes(key) ? p.filter(x=>x!==key) : [...p, key]);
+  }
 
   async function save() {
     if (!form.name||!form.email) { toast.error("Jaza sehemu zote zinazohitajika"); return; }
@@ -37,7 +82,7 @@ export default function StaffPage() {
     try {
       const method = editing ? "PATCH" : "POST";
       const url = editing ? `/api/staff/${editing.id}` : "/api/users";
-      const body: any = { name:form.name, email:form.email, role:form.role, storeId:form.storeId||undefined, phone:form.phone||undefined };
+      const body: any = { name:form.name, email:form.email, role:form.role, storeId:form.storeId||undefined, phone:form.phone||undefined, permissions };
       if (!editing) body.password = form.password;
       else if (form.password) body.password = form.password;
 
@@ -71,10 +116,18 @@ export default function StaffPage() {
   }
 
   const roleColorMap: Record<string,[string,string]> = {
-    TENANT_ADMIN:  ["#fef2f2","#b91c1c"],
-    STORE_MANAGER: ["#eff6ff","#1d4ed8"],
-    CASHIER:       ["#f0fdf4","#15803d"],
-    ACCOUNTANT:    ["#f5f3ff","#6d28d9"],
+    TENANT_ADMIN:       ["#fef2f2","#b91c1c"],
+    STORE_MANAGER:      ["#eff6ff","#1d4ed8"],
+    CASHIER:            ["#f0fdf4","#15803d"],
+    ACCOUNTANT:         ["#f5f3ff","#6d28d9"],
+    GENERAL_MANAGER:    ["#fdf4ff","#7e22ce"],
+    PRODUCTION_MANAGER: ["#fff7ed","#c2410c"],
+    HR_MANAGER:         ["#f0fdfa","#0f766e"],
+  };
+  const roleLabels: Record<string,string> = {
+    TENANT_ADMIN:"Admin", STORE_MANAGER:"Store Manager", CASHIER:"Cashier",
+    ACCOUNTANT:"Accountant", GENERAL_MANAGER:"General Manager",
+    PRODUCTION_MANAGER:"Production Manager", HR_MANAGER:"HR Manager",
   };
 
   const S: Record<string,React.CSSProperties> = {
@@ -98,6 +151,8 @@ export default function StaffPage() {
     grid2:  {display:"grid",gridTemplateColumns:"1fr 1fr",gap:12},
     cancelB:{flex:1,padding:"10px 0",borderRadius:12,border:"1px solid #e5e7eb",background:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",color:"#374151"},
     saveB:  {flex:1,padding:"10px 0",borderRadius:12,border:"none",background:"#2563eb",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"},
+    permBox:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"6px 12px",padding:"12px",background:"#f9fafb",borderRadius:10,border:"1px solid #e5e7eb",marginBottom:12},
+    permItem:{display:"flex",alignItems:"center",gap:7,fontSize:13,color:"#374151",cursor:"pointer"},
   };
 
   return (
@@ -126,11 +181,12 @@ export default function StaffPage() {
             <tbody>
               {staff.map((u:any)=>{
                 const [rbg,rclr]=roleColorMap[u.role]||["#f3f4f6","#374151"];
+                const perms: string[] = Array.isArray(u.permissions) ? u.permissions : [];
                 return (
                   <tr key={u.id}>
                     <td style={S.td}>
                       <div style={{display:"flex",alignItems:"center",gap:10}}>
-                        <div style={S.avatar}>{u.name?.charAt(0).toUpperCase()}</div>
+                        <div style={{...S.avatar,background:rclr||"#2563eb"}}>{u.name?.charAt(0).toUpperCase()}</div>
                         <div>
                           <div style={{fontWeight:700,color:"#111"}}>{u.name}</div>
                           {u.phone && <div style={{fontSize:11,color:"#9ca3af"}}>{u.phone}</div>}
@@ -138,8 +194,15 @@ export default function StaffPage() {
                       </div>
                     </td>
                     <td style={{...S.td,color:"#6b7280"}}>{u.email}</td>
-                    <td style={S.td}><span style={{display:"inline-block",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700,background:rbg,color:rclr}}>{u.role.replace(/_/g," ")}</span></td>
-                    <td style={{...S.td,color:"#6b7280"}}>{u.store?.name||"—"}</td>
+                    <td style={S.td}>
+                      <span style={{display:"inline-block",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700,background:rbg,color:rclr}}>
+                        {roleLabels[u.role]||u.role.replace(/_/g," ")}
+                      </span>
+                    </td>
+                    <td style={S.td}>
+                      <div style={{color:"#6b7280"}}>{u.store?.name||"—"}</div>
+                      {perms.length>0 && <div style={{fontSize:10,color:"#9ca3af",marginTop:2}}>{perms.length} permissions</div>}
+                    </td>
                     <td style={S.td}><span style={{display:"inline-block",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700,background:u.isActive?"#f0fdf4":"#fef2f2",color:u.isActive?"#16a34a":"#dc2626"}}>{u.isActive?"Hai":"Imezimwa"}</span></td>
                     <td style={S.td}>
                       <div style={{display:"flex",gap:6}}>
@@ -182,11 +245,14 @@ export default function StaffPage() {
               <div style={S.grid2}>
                 <div>
                   <label style={S.lbl}>Jukumu *</label>
-                  <select value={form.role} onChange={e=>setForm(p=>({...p,role:e.target.value}))} style={S.sel}>
+                  <select value={form.role} onChange={e=>onRoleChange(e.target.value)} style={S.sel}>
                     <option value="CASHIER">Cashier</option>
-                    <option value="STORE_MANAGER">Meneja wa Duka</option>
-                    <option value="ACCOUNTANT">Mhasibu</option>
-                    <option value="TENANT_ADMIN">Msimamizi</option>
+                    <option value="STORE_MANAGER">Store Manager</option>
+                    <option value="ACCOUNTANT">Accountant</option>
+                    <option value="GENERAL_MANAGER">General Manager</option>
+                    <option value="PRODUCTION_MANAGER">Production Manager</option>
+                    <option value="HR_MANAGER">HR Manager</option>
+                    <option value="TENANT_ADMIN">Admin</option>
                   </select>
                 </div>
                 <div>
@@ -196,6 +262,21 @@ export default function StaffPage() {
                     {stores.map((s:any)=><option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
                 </div>
+              </div>
+
+              <label style={S.lbl}>Permissions <span style={{fontWeight:400,color:"#9ca3af",fontSize:12}}>(customize access)</span></label>
+              <div style={S.permBox}>
+                {ALL_PERMISSIONS.map(p=>(
+                  <label key={p.key} style={S.permItem}>
+                    <input
+                      type="checkbox"
+                      checked={permissions.includes(p.key)}
+                      onChange={()=>togglePerm(p.key)}
+                      style={{width:15,height:15,accentColor:"#2563eb",cursor:"pointer"}}
+                    />
+                    {p.label}
+                  </label>
+                ))}
               </div>
             </div>
             <div style={S.mftr}>
