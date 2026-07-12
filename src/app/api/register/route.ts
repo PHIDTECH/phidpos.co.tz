@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       slug = `${baseSlug}-${suffix++}`;
     }
 
-    const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+    const trialEnd = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000);
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Create tenant, store, user in transaction
