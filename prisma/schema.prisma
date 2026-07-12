@@ -68,6 +68,7 @@ model Tenant {
   timezone        String       @default("Africa/Dar_es_Salaam")
   smsApiKey       String?
   smsSenderId     String?
+  smsBalance      Int          @default(0)
   status          TenantStatus @default(ACTIVE)
   planId          String
   plan            Plan         @relation(fields: [planId], references: [id])
@@ -92,6 +93,7 @@ model Tenant {
   subscriptions   Subscription[]
   loyaltySettings LoyaltySettings?
   smsLogs         SmsLog[]
+  smsPurchases    SmsPurchase[]
 }
 
 model SelcomConfig {
@@ -600,5 +602,18 @@ model SmsLog {
   message     String
   status      String
   provider    String?
+  createdAt   DateTime @default(now())
+}
+
+model SmsPurchase {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  bundle      String
+  smsCount    Int
+  amount      Int
+  status      String   @default("PENDING")
+  phone       String?
+  paymentRef  String?
   createdAt   DateTime @default(now())
 }

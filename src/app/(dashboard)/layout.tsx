@@ -21,8 +21,15 @@ const navItems: NavItem[] = [
   },
   { href: "/superadmin/accounts",       key: "sa_accounts",       icon: "💰", color: "#16a34a", bg: "#f0fdf4", roles: ["SUPER_ADMIN"] },
   { href: "/superadmin/subscriptions",  key: "sa_subscriptions",  icon: "🔄", color: "#0891b2", bg: "#ecfeff", roles: ["SUPER_ADMIN"] },
+  { href: "/superadmin/messages",      key: "sa_messages",       icon: "💬", color: "#7c3aed", bg: "#f5f3ff", roles: ["SUPER_ADMIN"],
+    sub: [
+      { href: "/superadmin/messages/send",       key: "sa_msg_send" },
+      { href: "/superadmin/messages/sender-ids", key: "sa_msg_senderids" },
+      { href: "/superadmin/messages/purchases",  key: "sa_msg_purchases" },
+    ]
+  },
   { href: "/superadmin/settings",       key: "sa_settings",       icon: "⚙️", color: "#374151", bg: "#f9fafb", roles: ["SUPER_ADMIN"] },
-  { href: "/pos",             key: "pos",         icon: "🛒", color: "#16a34a", bg: "#f0fdf4", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"] },
+  { href: "/pos",             key: "mauzo",       icon: "🛒", color: "#16a34a", bg: "#f0fdf4", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"] },
   { href: "/products",        key: "products",    icon: "📦", color: "#7c3aed", bg: "#f5f3ff", roles: ["TENANT_ADMIN","STORE_MANAGER","ACCOUNTANT"] },
   { href: "/inventory",       key: "inventory",   icon: "🏪", color: "#0891b2", bg: "#ecfeff", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
   { href: "/customers",       key: "customers",   icon: "👥", color: "#db2777", bg: "#fdf2f8", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"] },
@@ -36,7 +43,14 @@ const navItems: NavItem[] = [
       { href: "/roles",  key: "all_roles" },
     ]
   },
-  { href: "/messages",        key: "messages",    icon: "💬", color: "#7c3aed", bg: "#f5f3ff", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
+  { href: "/messages",        key: "messages",    icon: "💬", color: "#7c3aed", bg: "#f5f3ff", roles: ["TENANT_ADMIN","STORE_MANAGER"],
+    sub: [
+      { href: "/messages/send",      key: "msg_send" },
+      { href: "/messages/logs",      key: "msg_logs" },
+      { href: "/messages/sender-id", key: "msg_senderid" },
+      { href: "/messages/buy",       key: "msg_buy" },
+    ]
+  },
   { href: "/settings",        key: "settings",    icon: "⚙️", color: "#374151", bg: "#f9fafb", roles: ["TENANT_ADMIN"] },
   { href: "/subscription",     key: "subscription", icon: "💳", color: "#0891b2", bg: "#ecfeff", roles: ["TENANT_ADMIN"] },
 ];
@@ -250,10 +264,17 @@ const styles = `
 `;
 
 const subLabels: Record<string,string> = {
-  sa_users:     "Users",
-  sa_tenants:   "Tenants",
-  all_staff:    "All Staff",
-  all_roles:    "All Roles",
+  sa_users:          "Users",
+  sa_tenants:        "Tenants",
+  all_staff:         "All Staff",
+  all_roles:         "All Roles",
+  sa_msg_send:       "Send to Tenants",
+  sa_msg_senderids:  "Sender ID Approvals",
+  sa_msg_purchases:  "SMS Purchases",
+  msg_send:          "Tuma SMS",
+  msg_logs:          "Historia",
+  msg_senderid:      "Sender ID",
+  msg_buy:           "Nunua SMS",
 };
 
 const mainLabels: Record<string,string> = {
@@ -262,7 +283,7 @@ const mainLabels: Record<string,string> = {
   staff_roles: "Staff & Roles",
   messages:    "Messages",
   dashboard:   "Dashboard",
-  pos:         "POS",
+  mauzo:       "Mauzo / Sales",
   products:    "Products",
   inventory:   "Inventory",
   customers:   "Customers",
@@ -272,9 +293,10 @@ const mainLabels: Record<string,string> = {
   reports:     "Reports",
   settings:     "Settings",
   subscription: "Subscription",
-  sa_accounts:       "Accounts",
-  sa_subscriptions:  "Subscriptions",
-  sa_settings:       "Settings",
+  sa_accounts:      "Accounts",
+  sa_subscriptions: "Subscriptions",
+  sa_messages:      "Messages",
+  sa_settings:      "Settings",
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
