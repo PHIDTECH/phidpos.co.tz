@@ -356,7 +356,7 @@ export default function Home() {
             </div>
             PhidPOS
           </div>
-          <div className="footer-copy">© {new Date().getFullYear()} PhidPOS na Phidtech ICT & Business Solutions</div>
+          <div className="footer-copy">© {new Date().getFullYear()} PhidPOS {lang === "sw" ? "na" : "by"} Phidtech ICT & Business Solutions</div>
           <div className="footer-phone">📞 +255 682 188 544</div>
         </div>
       </footer>
