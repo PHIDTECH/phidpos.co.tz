@@ -17,10 +17,10 @@ const navItems: NavItem[] = [
     sub: [
       { href: "/superadmin/users",     key: "sa_users" },
       { href: "/superadmin/tenants",   key: "sa_tenants" },
-      { href: "/superadmin/accounts",  key: "sa_accounts" },
-      { href: "/superadmin/settings",  key: "sa_settings" },
     ]
   },
+  { href: "/superadmin/accounts",  key: "sa_accounts",  icon: "💰", color: "#16a34a", bg: "#f0fdf4", roles: ["SUPER_ADMIN"] },
+  { href: "/superadmin/settings",  key: "sa_settings",  icon: "⚙️", color: "#374151", bg: "#f9fafb", roles: ["SUPER_ADMIN"] },
   { href: "/pos",             key: "pos",         icon: "🛒", color: "#16a34a", bg: "#f0fdf4", roles: ["TENANT_ADMIN","STORE_MANAGER","CASHIER"] },
   { href: "/products",        key: "products",    icon: "📦", color: "#7c3aed", bg: "#f5f3ff", roles: ["TENANT_ADMIN","STORE_MANAGER","ACCOUNTANT"] },
   { href: "/inventory",       key: "inventory",   icon: "🏪", color: "#0891b2", bg: "#ecfeff", roles: ["TENANT_ADMIN","STORE_MANAGER"] },
@@ -290,8 +290,6 @@ const styles = `
 const subLabels: Record<string,string> = {
   sa_users:     "Users",
   sa_tenants:   "Tenants",
-  sa_accounts:  "Accounts",
-  sa_settings:  "Settings",
   all_staff:    "All Staff",
   all_roles:    "All Roles",
 };
@@ -312,6 +310,8 @@ const mainLabels: Record<string,string> = {
   reports:     "Reports",
   settings:     "Settings",
   subscription: "Subscription",
+  sa_accounts:  "Accounts",
+  sa_settings:  "Settings",
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
