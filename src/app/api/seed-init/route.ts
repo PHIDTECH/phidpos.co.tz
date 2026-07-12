@@ -82,6 +82,21 @@ export async function GET(req: NextRequest) {
     });
     results.push("✅ Demo Admin: bagokap.8275@gmail.com / Phidtech@@2023");
 
+    // Also reset james@gmail.com if exists
+    const jamesUser = await prisma.user.findUnique({ where: { email: "james@gmail.com" } });
+    if (jamesUser) {
+      const jamesHash = await bcrypt.hash("Phidtech@@2023", 12);
+      await prisma.user.update({ where: { email: "james@gmail.com" }, data: { password: jamesHash, isActive: true } });
+      if (jamesUser.tenantId) {
+        await prisma.tenant.update({ where: { id: jamesUser.tenantId }, data: { status: "ACTIVE" } });
+      }
+      results.push("✅ james@gmail.com reset / Phidtech@@2023");
+    }
+
+    // Activate ALL tenants to prevent login failures
+    await prisma.tenant.updateMany({ where: { status: { not: "ACTIVE" } }, data: { status: "ACTIVE" } });
+    results.push("✅ All tenants set to ACTIVE");
+
     // Categories & units — only create seed defaults, never touch user-created data
     const cat1 = await prisma.category.upsert({ where: { id: "cat-beverages" }, update: {}, create: { id: "cat-beverages", tenantId: demoTenant.id, name: "Vinywaji" } });
     const cat2 = await prisma.category.upsert({ where: { id: "cat-food" }, update: {}, create: { id: "cat-food", tenantId: demoTenant.id, name: "Vyakula" } });
