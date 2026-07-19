@@ -325,18 +325,18 @@ export default function POSPage() {
               value={productSearch}
               onChange={e => handleProductSearch(e.target.value)}
               onKeyDown={handleProductKeyDown}
-              onBlur={() => setTimeout(() => setShowProductDropdown(false), 150)}
+              onBlur={() => setTimeout(() => setShowProductDropdown(false), 300)}
               placeholder="Tafuta bidhaa kwa jina, barcode au SKU…"
               style={{ ...S.input, paddingLeft: 36 }}
             />
             <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 15 }}>🔍</span>
             {showProductDropdown && filteredProducts.length > 0 && (
-              <div style={S.dropdown}>
+              <div style={S.dropdown} onMouseDown={e => e.preventDefault()}>
                 {filteredProducts.map(p => {
                   const stock = p.inventories?.[0]?.quantity ?? 0;
                   const price = customer?.type === "WHOLESALE" && p.wholesalePrice ? p.wholesalePrice : p.retailPrice;
                   return (
-                    <button key={p.id} onMouseDown={() => addToCart(p)} style={{ ...S.dropRow, opacity: 1 }}>
+                    <button key={p.id} onMouseDown={e => { e.preventDefault(); addToCart(p); }} style={{ ...S.dropRow, opacity: 1 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <div>
                           <div style={{ fontWeight: 700, fontSize: 13, color: "#111" }}>{p.name}</div>
