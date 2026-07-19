@@ -62,6 +62,7 @@ export default function POSPage() {
 
   const productSearchRef = useRef<HTMLInputElement>(null);
   const productWrapRef = useRef<HTMLDivElement>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -151,7 +152,11 @@ export default function POSPage() {
 
   function handleProductSearch(q: string) {
     setProductSearch(q);
-    if (!q.trim()) { setFilteredProducts([]); setShowProductDropdown(false); return; }
+    if (!q.trim()) { setFilteredProducts([]); setShowProductDropdown(false); setDropdownPos(null); return; }
+    if (productSearchRef.current) {
+      const r = productSearchRef.current.getBoundingClientRect();
+      setDropdownPos({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: r.width });
+    }
     const lower = q.toLowerCase();
     const matches = products.filter(p =>
       p.name.toLowerCase().includes(lower) ||
@@ -341,8 +346,8 @@ export default function POSPage() {
               style={{ ...S.input, paddingLeft: 36 }}
             />
             <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 15 }}>🔍</span>
-            {showProductDropdown && filteredProducts.length > 0 && (
-              <div style={S.dropdown}>
+            {showProductDropdown && filteredProducts.length > 0 && dropdownPos && (
+              <div style={{ position: "fixed", top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.18)", zIndex: 9999, maxHeight: 300, overflowY: "auto" as const }}>
                 {filteredProducts.map(p => {
                   const stock = p.inventories?.[0]?.quantity ?? 0;
                   const price = customer?.type === "WHOLESALE" && p.wholesalePrice ? p.wholesalePrice : p.retailPrice;
@@ -363,8 +368,8 @@ export default function POSPage() {
                 })}
               </div>
             )}
-            {showProductDropdown && filteredProducts.length === 0 && productSearch.trim() && (
-              <div style={{ ...S.dropdown, padding: "16px", textAlign: "center", color: "#9ca3af", fontSize: 13 }}>Hakuna bidhaa zilizopatikana</div>
+            {showProductDropdown && filteredProducts.length === 0 && productSearch.trim() && dropdownPos && (
+              <div style={{ position: "fixed", top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.18)", zIndex: 9999, padding: 16, textAlign: "center" as const, color: "#9ca3af", fontSize: 13 }}>Hakuna bidhaa zilizopatikana</div>
             )}
           </div>
         </div>
