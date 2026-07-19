@@ -200,7 +200,7 @@ export default function POSPage() {
         amountPaid: status === "LOAN" ? 0 : status === "UNPAID" ? 0 : parseFloat(amountPaid || total.toString()),
         change: status === "PAID" ? change : 0,
         debtAmount: status === "LOAN" ? total : status === "UNPAID" ? total : 0,
-        paymentMethod: status === "LOAN" || status === "UNPAID" ? "CREDIT" : paymentMethod,
+        paymentMethod: (status === "LOAN" || status === "UNPAID" ? "CREDIT" : paymentMethod) as "CASH" | "MOBILE_MONEY" | "BANK_TRANSFER" | "CREDIT",
         dueDate: status === "LOAN" ? dueDate : undefined,
         createdAt: new Date().toISOString(),
       };
