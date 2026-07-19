@@ -61,11 +61,11 @@ export default function POSPage() {
   const [showReceipt, setShowReceipt] = useState(false);
 
   const productSearchRef = useRef<HTMLInputElement>(null);
-  const productDropdownRef = useRef<HTMLDivElement>(null);
+  const productWrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (productDropdownRef.current && !productDropdownRef.current.contains(e.target as Node)) {
+      if (productWrapRef.current && !productWrapRef.current.contains(e.target as Node)) {
         setShowProductDropdown(false);
       }
     }
@@ -329,7 +329,7 @@ export default function POSPage() {
         {/* Product Search Dropdown */}
         <div style={S.card}>
           <label style={S.label}>➕ Ongeza Bidhaa</label>
-          <div style={{ position: "relative" }}>
+          <div ref={productWrapRef} style={{ position: "relative" }}>
             <input
               ref={productSearchRef}
               type="text"
@@ -342,12 +342,12 @@ export default function POSPage() {
             />
             <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 15 }}>🔍</span>
             {showProductDropdown && filteredProducts.length > 0 && (
-              <div ref={productDropdownRef} style={S.dropdown}>
+              <div style={S.dropdown}>
                 {filteredProducts.map(p => {
                   const stock = p.inventories?.[0]?.quantity ?? 0;
                   const price = customer?.type === "WHOLESALE" && p.wholesalePrice ? p.wholesalePrice : p.retailPrice;
                   return (
-                    <button key={p.id} onClick={() => addToCart(p)} style={{ ...S.dropRow, opacity: 1 }}>
+                    <button key={p.id} onMouseDown={e => { e.preventDefault(); e.stopPropagation(); addToCart(p); }} style={{ ...S.dropRow, opacity: 1 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <div>
                           <div style={{ fontWeight: 700, fontSize: 13, color: "#111" }}>{p.name}</div>
