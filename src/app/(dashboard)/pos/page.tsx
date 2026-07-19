@@ -61,6 +61,17 @@ export default function POSPage() {
   const [showReceipt, setShowReceipt] = useState(false);
 
   const productSearchRef = useRef<HTMLInputElement>(null);
+  const productDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (productDropdownRef.current && !productDropdownRef.current.contains(e.target as Node)) {
+        setShowProductDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
   const total = Math.max(0, subtotal - discount);
@@ -325,18 +336,18 @@ export default function POSPage() {
               value={productSearch}
               onChange={e => handleProductSearch(e.target.value)}
               onKeyDown={handleProductKeyDown}
-              onBlur={() => setTimeout(() => setShowProductDropdown(false), 300)}
+              onFocus={() => { if (productSearch.trim() && filteredProducts.length > 0) setShowProductDropdown(true); }}
               placeholder="Tafuta bidhaa kwa jina, barcode au SKU…"
               style={{ ...S.input, paddingLeft: 36 }}
             />
             <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 15 }}>🔍</span>
             {showProductDropdown && filteredProducts.length > 0 && (
-              <div style={S.dropdown} onMouseDown={e => e.preventDefault()}>
+              <div ref={productDropdownRef} style={S.dropdown}>
                 {filteredProducts.map(p => {
                   const stock = p.inventories?.[0]?.quantity ?? 0;
                   const price = customer?.type === "WHOLESALE" && p.wholesalePrice ? p.wholesalePrice : p.retailPrice;
                   return (
-                    <button key={p.id} onMouseDown={e => { e.preventDefault(); addToCart(p); }} style={{ ...S.dropRow, opacity: 1 }}>
+                    <button key={p.id} onClick={() => addToCart(p)} style={{ ...S.dropRow, opacity: 1 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <div>
                           <div style={{ fontWeight: 700, fontSize: 13, color: "#111" }}>{p.name}</div>
@@ -439,6 +450,14 @@ export default function POSPage() {
           )}
         </div>
 
+        {cart.length > 0 && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto", padding: "6px 16px", background: "#f9fafb", borderBottom: "1px solid #e5e7eb", gap: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af" }}>BIDHAA</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textAlign: "center", minWidth: 72 }}>IDADI</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textAlign: "right", minWidth: 80 }}>BEI</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textAlign: "right", minWidth: 80 }}>JUMLA</div>
+          </div>
+        )}
         <div style={S.cartList}>
           {cart.length === 0 ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: "#d1d5db", padding: 32 }}>
@@ -448,22 +467,18 @@ export default function POSPage() {
             </div>
           ) : (
             cart.map(item => (
-              <div key={item.productId} style={S.cartItem}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#111", flex: 1, paddingRight: 8 }}>{item.name}</div>
-                  <button onClick={() => removeFromCart(item.productId)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#ef4444" }}>🗑</button>
+              <div key={item.productId} style={{ ...S.cartItem, display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: 8, alignItems: "center" }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#111", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
+                  <button onClick={() => removeFromCart(item.productId)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, color: "#ef4444", padding: 0, marginTop: 2 }}>🗑 Ondoa</button>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <button onClick={() => updateQty(item.productId, -1)} style={S.qtyBtn}>−</button>
-                    <span style={{ fontSize: 14, fontWeight: 800, minWidth: 24, textAlign: "center" }}>{item.quantity}</span>
-                    <button onClick={() => updateQty(item.productId, 1)} style={S.qtyBtn}>+</button>
-                  </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: 11, color: "#9ca3af" }}>{formatCurrency(item.unitPrice, "TZS")} × {item.quantity}</div>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: "#2563eb" }}>{formatCurrency(item.total, "TZS")}</div>
-                  </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, justifyContent: "center" }}>
+                  <button onClick={() => updateQty(item.productId, -1)} style={S.qtyBtn}>−</button>
+                  <span style={{ fontSize: 13, fontWeight: 800, minWidth: 20, textAlign: "center" }}>{item.quantity}</span>
+                  <button onClick={() => updateQty(item.productId, 1)} style={S.qtyBtn}>+</button>
                 </div>
+                <div style={{ fontSize: 12, color: "#6b7280", textAlign: "right", minWidth: 80 }}>{formatCurrency(item.unitPrice, "TZS")}</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: "#2563eb", textAlign: "right", minWidth: 80 }}>{formatCurrency(item.total, "TZS")}</div>
               </div>
             ))
           )}
