@@ -68,8 +68,9 @@ export default function POSPage() {
   const debtAmount = paymentMethod === "CREDIT" ? total : Math.max(0, total - parseFloat(amountPaid || "0"));
 
   useEffect(() => {
+    if (!session?.user) return;
     loadProducts();
-    if (session?.user?.tenantId) loadOfflineCount();
+    loadOfflineCount();
     productSearchRef.current?.focus();
   }, [session]);
 
@@ -161,11 +162,12 @@ export default function POSPage() {
   function addToCart(product: Product) {
     const useWholesale = customer?.type === "WHOLESALE" && product.wholesalePrice;
     const price = useWholesale ? product.wholesalePrice! : product.retailPrice;
-    const stock = product.inventories?.[0]?.quantity ?? 999;
+    const stock = product.inventories?.[0]?.quantity ?? 0;
+    if (stock === 0) toast("⚠️ Bidhaa hii haina hifadhi", { icon: "⚠️" });
     setCart(prev => {
       const existing = prev.find(i => i.productId === product.id);
       if (existing) {
-        if (existing.quantity >= stock) { toast.error("Hifadhi haitoshi"); return prev; }
+        if (existing.quantity >= stock && stock > 0) { toast.error("Hifadhi haitoshi"); return prev; }
         return prev.map(i => i.productId === product.id
           ? { ...i, quantity: i.quantity + 1, total: (i.quantity + 1) * i.unitPrice - i.discount }
           : i);
@@ -334,7 +336,7 @@ export default function POSPage() {
                   const stock = p.inventories?.[0]?.quantity ?? 0;
                   const price = customer?.type === "WHOLESALE" && p.wholesalePrice ? p.wholesalePrice : p.retailPrice;
                   return (
-                    <button key={p.id} onMouseDown={() => addToCart(p)} disabled={stock <= 0} style={{ ...S.dropRow, opacity: stock <= 0 ? 0.45 : 1 }}>
+                    <button key={p.id} onMouseDown={() => addToCart(p)} style={{ ...S.dropRow, opacity: 1 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <div>
                           <div style={{ fontWeight: 700, fontSize: 13, color: "#111" }}>{p.name}</div>
